@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MANIFESTO // JAY WISDOM</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="terminal">
+    <div class="scan-line"></div>
+    <header class="merkle-header">
+      <pre class="ascii-branch">
+      └── jaywisdom.base.eth/docs/
+          └── manifesto.md  ◄── canonical
+      </pre>
+      <h1 class="glow">MANIFESTO</h1>
+      <p class="subtitle">The Receipt System Principles // v1.0</p>
+    </header>
+    <nav class="audit-nav">
+      <a href="index.html">[HOME]</a>
+      <a href="manifesto.html" class="active">[MANIFESTO]</a>
+      <a href="projects.html">[PROJECTS]</a>
+      <a href="receipts.html">[RECEIPTS]</a>
+      <a href="contact.html">[CONTACT]</a>
+    </nav>
+    <main>
+      <div class="status-panel" style="margin-bottom: 2rem;">
+        <div class="ledger-line">
+          <span class="glyph">📡</span>
+          <span class="label">COMMITTED:</span>
+          <span class="value">2026-04-16T14:45Z // REC#002</span>
+        </div>
+        <div class="ledger-line">
+          <span class="glyph">🔗</span>
+          <span class="label">CANONICAL SOURCE:</span>
+          <span class="value">/docs/manifesto.md</span>
+        </div>
+      </div>
+      <section class="manifesto-content" style="margin-bottom: 3rem;">
+        <div class="principle"><h3>I. PROOF IS THE PRODUCT</h3><p>We do not ship promises. We ship evidence. Every system action leaves a durable, inspectable record.</p></div>
+        <div class="principle"><h3>II. CONTROL PLANES OVER DASHBOARDS</h3><p>Interfaces are ephemeral. Control logic is eternal. We build the latter first.</p></div>
+        <div class="principle"><h3>III. LEGIBILITY AS ARCHITECTURE</h3><p>If a system cannot explain itself, it is broken. Documentation is not decoration—it is the structure.</p></div>
+        <div class="principle"><h3>IV. AUDIT TRAILS ARE USER FEATURES</h3><p>The ability to verify is the ability to trust. Trustless systems are the only durable systems.</p></div>
+        <div class="principle"><h3>V. TERMINAL GLOW OVER CORPORATE SHEEN</h3><p>We inherit the aesthetic of infrastructure: monospaced truths, dark mode clarity, and the visible hum of computation.</p></div>
+        <div class="principle"><h3>VI. RECEIPTS ARE IMMUTABLE. AMENDMENTS ARE NEW RECEIPTS.</h3><p>We do not edit history. We append to it. Every correction is a new event with its own hash.</p></div>
+        <div class="principle"><h3>VII. THE SYSTEM MUST EXPLAIN ITSELF</h3><p>At any moment, a visitor should be able to trace: who acted, when, why, and what changed. This is not a feature. This is the foundation.</p></div>
+      </section>
+      <section class="signature-block" style="border-top: 1px solid var(--merkle-line); padding-top: 2rem;">
+        <p style="color: var(--terminal-glow); margin-bottom: 1rem;">Signed,</p>
+        <p style="font-size: 1.25rem; margin-bottom: 0.5rem;">Jay Wisdom (Zero)</p>
+        <p style="color: var(--audit-grey);">Computer Wizard // Control Plane Operator</p>
+        <p style="color: var(--audit-grey); margin-top: 1rem;">2026 — The Year of Receipts</p>
+      </section>
+    </main>
+    <footer>
+      <div class="audit-trail">
+        <span>└─[zero@control-plane:~]$ cat manifesto.md</span>
+        <span>// version 1.0 // immutable</span>
+      </div>
+      <div class="timestamp">
+        <span id="live-timestamp"></span>
+        <span class="glyph">⏣</span>
+      </div>
+    </footer>
+  </div>
+  <script>
+    function updateTimestamp() {
+      const now = new Date();
+      document.getElementById('live-timestamp').textContent = now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    }
+    updateTimestamp();
+    setInterval(updateTimestamp, 1000);
+  </script>
+  <style>
+    .principle { margin-bottom: 2rem; }
+    .principle h3 { color: var(--terminal-glow); font-weight: 400; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .principle p { color: var(--audit-grey); margin-left: 1.5rem; }
+  </style>
+</body>
+</html>
