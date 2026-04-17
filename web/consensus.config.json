@@ -1,0 +1,26 @@
+{
+  "version": "v2.0-draft",
+  "mode": "dual-node-quorum",
+  "nodes": [
+    {
+      "id": "WAITE_PARK_ANCHOR",
+      "role": "primary",
+      "url": "./verify.json"
+    },
+    {
+      "id": "REMOTE_AUDIT_MIRROR",
+      "role": "witness",
+      "url": "./verify.mirror.json"
+    }
+  ],
+  "consensus_rules": {
+    "max_audit_skew_minutes": 10,
+    "require_matching_root_hash": true,
+    "require_both_nodes_reachable": true
+  },
+  "states": {
+    "consensus_ok": "Both nodes reachable, root_hash matches, skew within threshold.",
+    "consensus_warning": "Both nodes reachable but audit skew exceeds threshold.",
+    "consensus_failure": "Root hash mismatch, unreachable witness, or malformed witness payload."
+  }
+}
