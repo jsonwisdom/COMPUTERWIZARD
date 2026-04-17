@@ -17,8 +17,8 @@
   ],
   "verification": {
     "method": "SHA-256",
-    "hash": "4a7f92026e6d7a123e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
-    "signature_type": "FIDO2_ATTESTATION_PENDING"
+    "hash": "3aaafd62fe33df746988306ae60050112268974c765dc67f467615a9a162004b",
+    "status": "VERIFIED"
   },
   "status": "SEALED"
 }
