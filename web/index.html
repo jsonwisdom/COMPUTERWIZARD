@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COMPUTERWIZARD // System Audit</title>
     <style>
-        :root { --green: #00ff41; --red: #ff3131; --bg: #0d0d0d; --surface: #1a1a1a; --text: #d1d1d1; }
+        :root {
+            --green: #00ff41;
+            --yellow: #ffd54a;
+            --red: #ff3131;
+            --bg: #0d0d0d;
+            --surface: #1a1a1a;
+            --text: #d1d1d1;
+        }
         body { background: var(--bg); color: var(--text); font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; display: flex; justify-content: center; }
         #audit-node { width: 100%; max-width: 800px; border: 1px solid #333; padding: 20px; background: var(--surface); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         header { border-bottom: 1px dashed #444; padding-bottom: 10px; margin-bottom: 20px; }
@@ -15,8 +22,10 @@
         .card { border: 1px solid #333; padding: 15px; text-align: center; background: #222; }
         .badge { display: block; font-weight: bold; margin-top: 10px; padding: 5px; border-radius: 2px; }
         .status-pass { color: var(--green); border: 1px solid var(--green); }
+        .status-warn { color: var(--yellow); border: 1px solid var(--yellow); }
         .status-fail { color: var(--red); border: 1px solid var(--red); animation: blink 1s infinite; }
         .anchor-surface { margin-top: 30px; background: #000; padding: 15px; border-left: 3px solid var(--green); font-size: 0.8em; overflow-x: auto; }
+        .warning-panel { display: none; color: var(--yellow); text-align: center; padding: 14px; margin-top: 18px; border: 1px solid var(--yellow); background: rgba(255, 213, 74, 0.08); }
         .error-overlay { display: none; color: var(--red); text-align: center; padding: 40px; }
         a { color: inherit; }
         @keyframes blink { 50% { opacity: 0.3; } }
@@ -42,6 +51,10 @@
             <div class="card">T3: ATTEST<span id="t3-badge" class="badge">---</span></div>
         </div>
 
+        <div id="ui-warning" class="warning-panel">
+            <strong>DEGRADING:</strong> Audit overdue. Check runner continuity.
+        </div>
+
         <div class="anchor-surface">
             <strong>ROOT_HASH:</strong> <span id="root-hash">---</span><br>
             <strong>SIGNER_ID:</strong> <span id="signer-id">---</span><br>
@@ -60,7 +73,8 @@
 </div>
 
 <script>
-    const STALE_THRESHOLD_MINUTES = 75;
+    const WARNING_THRESHOLD_MINUTES = 25;
+    const STALE_THRESHOLD_MINUTES = 60;
 
     function formatRelativeTime(date) {
         const diffMs = Date.now() - date.getTime();
@@ -83,6 +97,26 @@
         document.getElementById('error-message').textContent = message;
     }
 
+    function setFreshnessState(ageMinutes) {
+        const auditPathEl = document.getElementById('audit-path');
+        const warningEl = document.getElementById('ui-warning');
+
+        if (ageMinutes > STALE_THRESHOLD_MINUTES) {
+            throw new Error('CRITICAL: AUDIT STALE (Heartbeat Lost). Last successful audit was ' + formatRelativeTime(new Date(Date.now() - ageMinutes * 60000)) + '.');
+        }
+
+        if (ageMinutes > WARNING_THRESHOLD_MINUTES) {
+            auditPathEl.textContent = 'STATE: DEGRADING';
+            auditPathEl.className = 'badge status-warn';
+            warningEl.style.display = 'block';
+            return;
+        }
+
+        auditPathEl.textContent = 'STATE: OPTIMAL';
+        auditPathEl.className = 'badge status-pass';
+        warningEl.style.display = 'none';
+    }
+
     async function updateAudit() {
         try {
             const response = await fetch('./verify.json?t=' + Date.now());
@@ -94,14 +128,11 @@
                 throw new Error('Malformed last_audit_utc in verify.json.');
             }
 
-            const ageMinutes = (Date.now() - auditDate.getTime()) / 60000;
-            if (ageMinutes > STALE_THRESHOLD_MINUTES) {
-                throw new Error('WARNING: AUDIT STALE. Last successful audit was ' + formatRelativeTime(auditDate) + '.');
-            }
+            const ageMinutes = Math.floor((Date.now() - auditDate.getTime()) / 60000);
+            setFreshnessState(ageMinutes);
 
             document.getElementById('ui-content').style.display = 'block';
             document.getElementById('ui-error').style.display = 'none';
-
             document.getElementById('node-id').textContent = data.node;
             document.getElementById('operator').textContent = data.operator;
             document.getElementById('root-hash').textContent = data.proof.root_hash;
@@ -120,10 +151,6 @@
                 el.textContent = status;
                 el.className = 'badge ' + (status === 'PASS' ? 'status-pass' : 'status-fail');
             }
-
-            const pathEl = document.getElementById('audit-path');
-            pathEl.textContent = 'PATH: ' + data.integrity_mesh.external_audit_path;
-            pathEl.className = 'badge ' + (data.integrity_mesh.external_audit_path === 'STABLE' ? 'status-pass' : 'status-fail');
 
         } catch (e) {
             showError(e && e.message ? e.message : 'Unable to fetch mechanical truth from verify.json.');
