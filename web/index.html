@@ -3,31 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COMPUTERWIZARD // System Audit</title>
+    <title>COMPUTERWIZARD // Quorum Audit</title>
     <style>
         :root {
             --green: #00ff41;
             --yellow: #ffd54a;
+            --orange: #ff9f1a;
             --red: #ff3131;
             --bg: #0d0d0d;
             --surface: #1a1a1a;
             --text: #d1d1d1;
         }
         body { background: var(--bg); color: var(--text); font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        #audit-node { width: 100%; max-width: 800px; border: 1px solid #333; padding: 20px; background: var(--surface); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #audit-node { width: 100%; max-width: 960px; border: 1px solid #333; padding: 20px; background: var(--surface); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         header { border-bottom: 1px dashed #444; padding-bottom: 10px; margin-bottom: 20px; }
+        .subhead { font-size: 0.85em; opacity: 0.8; margin-top: 6px; }
         .pulse-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
-        .heartbeat { font-size: 0.85em; opacity: 0.8; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        .card { border: 1px solid #333; padding: 15px; text-align: center; background: #222; }
-        .badge { display: block; font-weight: bold; margin-top: 10px; padding: 5px; border-radius: 2px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .card { border: 1px solid #333; padding: 15px; background: #222; }
+        .card h3 { margin-top: 0; }
+        .badge { display: inline-block; font-weight: bold; margin-top: 10px; padding: 5px 8px; border-radius: 2px; }
         .status-pass { color: var(--green); border: 1px solid var(--green); }
         .status-warn { color: var(--yellow); border: 1px solid var(--yellow); }
+        .status-witness { color: var(--orange); border: 1px solid var(--orange); }
         .status-fail { color: var(--red); border: 1px solid var(--red); animation: blink 1s infinite; }
         .anchor-surface { margin-top: 30px; background: #000; padding: 15px; border-left: 3px solid var(--green); font-size: 0.8em; overflow-x: auto; }
-        .warning-panel { display: none; color: var(--yellow); text-align: center; padding: 14px; margin-top: 18px; border: 1px solid var(--yellow); background: rgba(255, 213, 74, 0.08); }
+        .warning-panel { display: none; text-align: center; padding: 14px; margin-top: 18px; }
+        .warning-degrading { color: var(--yellow); border: 1px solid var(--yellow); background: rgba(255, 213, 74, 0.08); }
+        .warning-witness { color: var(--orange); border: 1px solid var(--orange); background: rgba(255, 159, 26, 0.08); }
         .error-overlay { display: none; color: var(--red); text-align: center; padding: 40px; }
         a { color: inherit; }
+        code { word-break: break-all; }
         @keyframes blink { 50% { opacity: 0.3; } }
     </style>
 </head>
@@ -36,34 +42,51 @@
 <div id="audit-node">
     <div id="ui-content">
         <header>
-            <h1 style="margin:0; color:var(--green);">SYSTEM_AUDIT: <span id="node-id">LOADING...</span></h1>
-            <div class="heartbeat">OPERATOR: <span id="operator">---</span></div>
+            <h1 style="margin:0; color:var(--green);">QUORUM_AUDIT: <span id="node-id">LOADING...</span></h1>
+            <div class="subhead">OPERATOR: <span id="operator">---</span></div>
+            <div class="subhead">QUORUM STATE: <span id="quorum-state" class="badge">---</span></div>
         </header>
 
         <div class="pulse-row">
-            <div>INTEGRITY PULSE: <span id="pulse-age">---</span></div>
-            <div id="audit-path" class="badge">---</div>
+            <div>PRIMARY PULSE: <span id="primary-pulse-age">---</span></div>
+            <div>MIRROR PULSE: <span id="mirror-pulse-age">---</span></div>
         </div>
 
         <div class="grid">
-            <div class="card">T1: INTENT<span id="t1-badge" class="badge">---</span></div>
-            <div class="card">T2: DIGEST<span id="t2-badge" class="badge">---</span></div>
-            <div class="card">T3: ATTEST<span id="t3-badge" class="badge">---</span></div>
+            <div class="card">
+                <h3>PRIMARY NODE</h3>
+                <div>ID: <span id="primary-node">---</span></div>
+                <div>ROOT: <code id="primary-root">---</code></div>
+                <div>SIGNER: <code id="primary-signer">---</code></div>
+            </div>
+            <div class="card">
+                <h3>MIRROR NODE</h3>
+                <div>ID: <span id="mirror-node">---</span></div>
+                <div>ROOT: <code id="mirror-root">---</code></div>
+                <div>SIGNER: <code id="mirror-signer">---</code></div>
+            </div>
+            <div class="card">
+                <h3>INTEGRITY MESH</h3>
+                <div>T1: <span id="t1-badge" class="badge">---</span></div>
+                <div>T2: <span id="t2-badge" class="badge">---</span></div>
+                <div>T3: <span id="t3-badge" class="badge">---</span></div>
+            </div>
         </div>
 
         <div id="ui-warning" class="warning-panel">
-            <strong>DEGRADING:</strong> Audit overdue. Check runner continuity.
+            <strong id="warning-title">WARNING</strong>
+            <div id="warning-message">---</div>
         </div>
 
         <div class="anchor-surface">
-            <strong>ROOT_HASH:</strong> <span id="root-hash">---</span><br>
-            <strong>SIGNER_ID:</strong> <span id="signer-id">---</span><br>
-            <strong>VERIFIER :</strong> <span id="verifier">---</span>
+            <strong>PRIMARY VERIFIER:</strong> <span id="primary-verifier">---</span><br>
+            <strong>MIRROR VERIFIER:</strong> <span id="mirror-verifier">---</span><br>
+            <strong>PRIMARY RAW:</strong> <a href="./verify.json">./verify.json</a><br>
+            <strong>MIRROR RAW:</strong> <a href="./verify.mirror.json">./verify.mirror.json</a>
         </div>
-        
+
         <p style="font-size: 0.7em; margin-top: 20px; opacity: 0.6;">
-            <a href="https://github.com/jsonwisdom/COMPUTERWIZARD">[ VIEW SOURCE ]</a> | 
-            <a href="./verify.json">[ RAW JSON ]</a>
+            <a href="https://github.com/jsonwisdom/COMPUTERWIZARD">[ VIEW SOURCE ]</a>
         </p>
     </div>
     <div id="ui-error" class="error-overlay">
@@ -73,8 +96,9 @@
 </div>
 
 <script>
-    const WARNING_THRESHOLD_MINUTES = 25;
+    const DEGRADING_THRESHOLD_MINUTES = 30;
     const STALE_THRESHOLD_MINUTES = 60;
+    const MAX_CLOCK_SKEW_MINUTES = 45;
 
     function formatRelativeTime(date) {
         const diffMs = Date.now() - date.getTime();
@@ -97,68 +121,119 @@
         document.getElementById('error-message').textContent = message;
     }
 
-    function setFreshnessState(ageMinutes) {
-        const auditPathEl = document.getElementById('audit-path');
+    function hideError() {
+        document.getElementById('ui-content').style.display = 'block';
+        document.getElementById('ui-error').style.display = 'none';
+    }
+
+    function setBadge(id, status) {
+        const el = document.getElementById(id);
+        el.textContent = status;
+        el.className = 'badge ' + (status === 'PASS' ? 'status-pass' : 'status-fail');
+    }
+
+    function setQuorumState(state, className, warningTitle, warningMessage) {
+        const quorumEl = document.getElementById('quorum-state');
         const warningEl = document.getElementById('ui-warning');
+        const warningTitleEl = document.getElementById('warning-title');
+        const warningMessageEl = document.getElementById('warning-message');
 
-        if (ageMinutes > STALE_THRESHOLD_MINUTES) {
-            throw new Error('CRITICAL: AUDIT STALE (Heartbeat Lost). Last successful audit was ' + formatRelativeTime(new Date(Date.now() - ageMinutes * 60000)) + '.');
-        }
+        quorumEl.textContent = state;
+        quorumEl.className = 'badge ' + className;
 
-        if (ageMinutes > WARNING_THRESHOLD_MINUTES) {
-            auditPathEl.textContent = 'STATE: DEGRADING';
-            auditPathEl.className = 'badge status-warn';
+        if (warningTitle && warningMessage) {
             warningEl.style.display = 'block';
-            return;
+            warningEl.className = 'warning-panel ' + (className === 'status-witness' ? 'warning-witness' : 'warning-degrading');
+            warningTitleEl.textContent = warningTitle;
+            warningMessageEl.textContent = warningMessage;
+        } else {
+            warningEl.style.display = 'none';
+            warningEl.className = 'warning-panel';
         }
-
-        auditPathEl.textContent = 'STATE: OPTIMAL';
-        auditPathEl.className = 'badge status-pass';
-        warningEl.style.display = 'none';
     }
 
-    async function updateAudit() {
+    async function updateQuorum() {
         try {
-            const response = await fetch('./verify.json?t=' + Date.now());
-            if (!response.ok) throw new Error('Unable to fetch mechanical truth from verify.json.');
-            const data = await response.json();
+            const [pRes, mRes] = await Promise.all([
+                fetch('./verify.json?t=' + Date.now()),
+                fetch('./verify.mirror.json?t=' + Date.now())
+            ]);
 
-            const auditDate = new Date(data.last_audit_utc);
-            if (Number.isNaN(auditDate.getTime())) {
-                throw new Error('Malformed last_audit_utc in verify.json.');
+            if (!pRes.ok) throw new Error('PRIMARY OFFLINE');
+
+            const primary = await pRes.json();
+            const mirror = mRes.ok ? await mRes.json() : null;
+            const primaryDate = new Date(primary.last_audit_utc);
+            if (Number.isNaN(primaryDate.getTime())) throw new Error('PRIMARY TIMESTAMP MALFORMED');
+
+            const primaryAge = Math.floor((Date.now() - primaryDate.getTime()) / 60000);
+            if (primaryAge > STALE_THRESHOLD_MINUTES) {
+                throw new Error('PRIMARY STALE: last successful audit was ' + formatRelativeTime(primaryDate));
             }
 
-            const ageMinutes = Math.floor((Date.now() - auditDate.getTime()) / 60000);
-            setFreshnessState(ageMinutes);
+            hideError();
 
-            document.getElementById('ui-content').style.display = 'block';
-            document.getElementById('ui-error').style.display = 'none';
-            document.getElementById('node-id').textContent = data.node;
-            document.getElementById('operator').textContent = data.operator;
-            document.getElementById('root-hash').textContent = data.proof.root_hash;
-            document.getElementById('signer-id').textContent = data.proof.signer_id;
-            document.getElementById('verifier').textContent = data.proof.verifier_version;
-            document.getElementById('pulse-age').textContent = formatRelativeTime(auditDate) + ' (' + auditDate.toLocaleString() + ')';
+            document.getElementById('node-id').textContent = primary.node;
+            document.getElementById('operator').textContent = primary.operator;
+            document.getElementById('primary-node').textContent = primary.node;
+            document.getElementById('primary-root').textContent = primary.proof.root_hash;
+            document.getElementById('primary-signer').textContent = primary.proof.signer_id;
+            document.getElementById('primary-verifier').textContent = primary.proof.verifier_version;
+            document.getElementById('primary-pulse-age').textContent = formatRelativeTime(primaryDate) + ' (' + primaryDate.toLocaleString() + ')';
 
-            const layers = {
-                't1-badge': data.integrity_mesh.t1_intent,
-                't2-badge': data.integrity_mesh.t2_digest,
-                't3-badge': data.integrity_mesh.t3_attestation
-            };
+            setBadge('t1-badge', primary.integrity_mesh.t1_intent);
+            setBadge('t2-badge', primary.integrity_mesh.t2_digest);
+            setBadge('t3-badge', primary.integrity_mesh.t3_attestation);
 
-            for (const [id, status] of Object.entries(layers)) {
-                const el = document.getElementById(id);
-                el.textContent = status;
-                el.className = 'badge ' + (status === 'PASS' ? 'status-pass' : 'status-fail');
+            if (!mirror) {
+                document.getElementById('mirror-node').textContent = 'OFFLINE';
+                document.getElementById('mirror-root').textContent = '---';
+                document.getElementById('mirror-signer').textContent = '---';
+                document.getElementById('mirror-verifier').textContent = '---';
+                document.getElementById('mirror-pulse-age').textContent = 'UNAVAILABLE';
+                setQuorumState(
+                    'WITNESS_OFFLINE',
+                    'status-witness',
+                    'REDUCED SECURITY',
+                    'Primary is reachable, but the mirror witness is offline or missing.'
+                );
+                return;
             }
 
+            const mirrorDate = new Date(mirror.last_audit_utc);
+            if (Number.isNaN(mirrorDate.getTime())) throw new Error('MIRROR TIMESTAMP MALFORMED');
+            const mirrorAge = Math.floor((Date.now() - mirrorDate.getTime()) / 60000);
+
+            document.getElementById('mirror-node').textContent = mirror.node;
+            document.getElementById('mirror-root').textContent = mirror.proof.root_hash;
+            document.getElementById('mirror-signer').textContent = mirror.proof.signer_id;
+            document.getElementById('mirror-verifier').textContent = mirror.proof.verifier_version;
+            document.getElementById('mirror-pulse-age').textContent = formatRelativeTime(mirrorDate) + ' (' + mirrorDate.toLocaleString() + ')';
+
+            if (primary.proof.root_hash !== mirror.proof.root_hash) {
+                throw new Error('CONSENSUS FAILURE: HASH MISMATCH DETECTED');
+            }
+
+            const skew = Math.abs(primaryDate.getTime() - mirrorDate.getTime()) / 60000;
+
+            if (primaryAge > DEGRADING_THRESHOLD_MINUTES || mirrorAge > DEGRADING_THRESHOLD_MINUTES || skew > MAX_CLOCK_SKEW_MINUTES) {
+                setQuorumState(
+                    'QUORUM_DEGRADING',
+                    'status-warn',
+                    'INVESTIGATE DRIFT',
+                    'Nodes agree on root hash, but audit freshness or clock skew is outside the nominal window.'
+                );
+                return;
+            }
+
+            setQuorumState('CONSENSUS_STABLE', 'status-pass');
         } catch (e) {
-            showError(e && e.message ? e.message : 'Unable to fetch mechanical truth from verify.json.');
+            showError(e && e.message ? e.message : 'AUDIT INTERRUPTED');
         }
     }
 
-    updateAudit();
-    setInterval(updateAudit, 60000);
+    updateQuorum();
+    setInterval(updateQuorum, 60000);
 </script>
 
 </body>
