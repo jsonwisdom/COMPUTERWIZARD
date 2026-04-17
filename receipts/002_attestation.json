@@ -1,0 +1,14 @@
+{
+  "receipt_version": "1.0.0",
+  "id": "rcpt_002_attestation_pending",
+  "parent_id": "rcpt_001_genesis_9c58e03f",
+  "type": "HARDWARE_ATTESTATION",
+  "timestamp": "2026-04-16T21:30:00Z",
+  "attestation": {
+    "signer_id": "WAITE_PARK_ANCHOR_KMS_01",
+    "algorithm": "RSASSA-PSS",
+    "verified_root_hash": "3aaafd62fe33df746988306ae60050112268974c765dc67f467615a9a162004b",
+    "signature": null
+  },
+  "status": "ATTESTATION_PENDING"
+}
