@@ -6,9 +6,10 @@
   "timestamp": "2026-04-16T21:30:00Z",
   "attestation": {
     "signer_id": "WAITE_PARK_ANCHOR_KMS_01",
-    "algorithm": "RSASSA-PSS",
+    "algorithm": "RSA_SIGN_PSS_4096_SHA256",
     "verified_root_hash": "3aaafd62fe33df746988306ae60050112268974c765dc67f467615a9a162004b",
-    "signature": null
+    "signature": "mJEYeBOvKZ3VktBI3ZKlxCzdao0bD1wlKe2+IjYAyzV0AUS+o2qndf8EwiYOHUx15VwtbrRJORaV+N8VD3bK1s0ushlyvRInllbX2ZYnq1LMg5qA+cEXtogVFCRu3Z9vfbb3m/QXoJpHI2Mh+KAoYH4nFQaOhK+BLkiB1D9CVcTt8Q2xLqWu02SfBkBJnj6EK8VW2qTf8G99ovgBd74wuL42lM7mqJfTu/5qFj416aV1TAdLl2GdmSixbrJNcR6fUyiUlHkoTk/NQvO+DHQtZfnmJEt9l/ixV8LVmcW1bMhjapHncOAB+uJc92nooh+Oy/WKg01KfuhlND7Ni29hYfccw3XaqD96rxOXYJyzluOuEP9L7dTk9Wj7qabon9qCy0PCP627lwAL1vmf6tXClD4Xh6llEglJ3OU29mMsDoATRjNzbFfKIFkgNprxX9Q+xc9l2iEcevnoKQzZUI+tWRguHaJysdcyvYwddKGRkOgwN1qXO4d8XdhO/6TZJ7Lbk4N7G7izvnqfjGaAtcSIYbNtkxM6UbIkuyOZ8hTzCtG87kXR61JpGQM56VebLNJqWIVNjkWgmoo2H5ivMCjXy1lTSKA8I95tUeElM2WqMvRbLfKqYeXvZff6tKDhYJGTlfV6oSew3WBjCUPl14rHQWtt/g4vRgeQSScXcD1S7F0=",
+    "protection_level": "SOFTWARE"
   },
-  "status": "ATTESTATION_PENDING"
+  "status": "ATTESTED"
 }
