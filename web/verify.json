@@ -1,0 +1,16 @@
+{
+  "node": "WAITE_PARK_ANCHOR",
+  "operator": "Jason Wisdom",
+  "last_audit_utc": "2026-04-17T02:30:00Z",
+  "integrity_mesh": {
+    "t1_intent": "PASS",
+    "t2_digest": "PASS",
+    "t3_attestation": "PASS",
+    "external_audit_path": "STABLE"
+  },
+  "proof": {
+    "root_hash": "3aaafd62fe33df746988306ae60050112268974c765dc67f467615a9a162004b",
+    "signature_status": "CRYPTOGRAPHICALLY_VERIFIED",
+    "verifier_version": "v1.1-openssl-pss"
+  }
+}
