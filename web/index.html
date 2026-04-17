@@ -55,16 +55,49 @@
     </div>
     <div id="ui-error" class="error-overlay">
         <h2>CRITICAL: AUDIT INTERRUPTED</h2>
-        <p>Unable to fetch mechanical truth from verify.json.</p>
+        <p id="error-message">Unable to fetch mechanical truth from verify.json.</p>
     </div>
 </div>
 
 <script>
+    const STALE_THRESHOLD_MINUTES = 75;
+
+    function formatRelativeTime(date) {
+        const diffMs = Date.now() - date.getTime();
+        const diffMinutes = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMinutes < 1) return 'just now';
+        if (diffMinutes === 1) return '1 minute ago';
+        if (diffMinutes < 60) return diffMinutes + ' minutes ago';
+        if (diffHours === 1) return '1 hour ago';
+        if (diffHours < 24) return diffHours + ' hours ago';
+        if (diffDays === 1) return '1 day ago';
+        return diffDays + ' days ago';
+    }
+
+    function showError(message) {
+        document.getElementById('ui-content').style.display = 'none';
+        document.getElementById('ui-error').style.display = 'block';
+        document.getElementById('error-message').textContent = message;
+    }
+
     async function updateAudit() {
         try {
             const response = await fetch('./verify.json?t=' + Date.now());
-            if (!response.ok) throw new Error();
+            if (!response.ok) throw new Error('Unable to fetch mechanical truth from verify.json.');
             const data = await response.json();
+
+            const auditDate = new Date(data.last_audit_utc);
+            if (Number.isNaN(auditDate.getTime())) {
+                throw new Error('Malformed last_audit_utc in verify.json.');
+            }
+
+            const ageMinutes = (Date.now() - auditDate.getTime()) / 60000;
+            if (ageMinutes > STALE_THRESHOLD_MINUTES) {
+                throw new Error('WARNING: AUDIT STALE. Last successful audit was ' + formatRelativeTime(auditDate) + '.');
+            }
 
             document.getElementById('ui-content').style.display = 'block';
             document.getElementById('ui-error').style.display = 'none';
@@ -74,6 +107,7 @@
             document.getElementById('root-hash').textContent = data.proof.root_hash;
             document.getElementById('signer-id').textContent = data.proof.signer_id;
             document.getElementById('verifier').textContent = data.proof.verifier_version;
+            document.getElementById('pulse-age').textContent = formatRelativeTime(auditDate) + ' (' + auditDate.toLocaleString() + ')';
 
             const layers = {
                 't1-badge': data.integrity_mesh.t1_intent,
@@ -91,14 +125,11 @@
             pathEl.textContent = 'PATH: ' + data.integrity_mesh.external_audit_path;
             pathEl.className = 'badge ' + (data.integrity_mesh.external_audit_path === 'STABLE' ? 'status-pass' : 'status-fail');
 
-            const auditDate = new Date(data.last_audit_utc);
-            document.getElementById('pulse-age').textContent = auditDate.toLocaleString();
-
         } catch (e) {
-            document.getElementById('ui-content').style.display = 'none';
-            document.getElementById('ui-error').style.display = 'block';
+            showError(e && e.message ? e.message : 'Unable to fetch mechanical truth from verify.json.');
         }
     }
+
     updateAudit();
     setInterval(updateAudit, 60000);
 </script>
