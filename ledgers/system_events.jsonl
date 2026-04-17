@@ -1,1 +1,4 @@
 {"event":"system_init","timestamp":"2026-04-16T14:32:00Z","actor":"zero","witness":"claude","details":"Platform genesis initiated","receipt":"001_platform_genesis.md"}
+{"event":"LEDGER_ACTIVATED","node":"Waite Park Anchor","mode":"STRICT_APPEND","timestamp":"2026-04-16T20:55:00Z","sha_check":"REQUIRED"}
+{"event":"RECEIPT_STATUS_UPDATED","receipt_id":"rcpt_001_genesis_9c58e03f","new_status":"UNVERIFIED","reason":"Awaiting local hash verification","timestamp":"2026-04-16T20:55:10Z"}
+{"event":"APPEND_DISCIPLINE_ENFORCED","trigger":"GitHub SHA mismatch","outcome":"Success","timestamp":"2026-04-16T20:55:20Z"}
