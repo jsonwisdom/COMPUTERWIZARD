@@ -3,48 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COMPUTERWIZARD | Sovereign Intelligence Mesh</title>
+    <title>COMPUTERWIZARD // System Audit</title>
     <style>
-        body { background: #0a0a0a; color: #00ff41; font-family: 'Courier New', Courier, monospace; padding: 2rem; }
-        .terminal { border: 1px solid #00ff41; padding: 1.5rem; box-shadow: 0 0 15px rgba(0, 255, 65, 0.2); }
-        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
-        .card { border: 1px dashed #00ff41; padding: 1rem; }
-        .unverified { color: #ff3e3e; text-shadow: 0 0 5px #ff3e3e; }
-        .verified { color: #00ff41; }
-        h1 { border-bottom: 2px solid #00ff41; padding-bottom: 0.5rem; }
-        .motto { font-style: italic; color: #888; margin-bottom: 2rem; }
+        :root { --green: #00ff41; --red: #ff3131; --bg: #0d0d0d; --surface: #1a1a1a; --text: #d1d1d1; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        #audit-node { width: 100%; max-width: 800px; border: 1px solid #333; padding: 20px; background: var(--surface); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        header { border-bottom: 1px dashed #444; padding-bottom: 10px; margin-bottom: 20px; }
+        .pulse-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+        .heartbeat { font-size: 0.85em; opacity: 0.8; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .card { border: 1px solid #333; padding: 15px; text-align: center; background: #222; }
+        .badge { display: block; font-weight: bold; margin-top: 10px; padding: 5px; border-radius: 2px; }
+        .status-pass { color: var(--green); border: 1px solid var(--green); }
+        .status-fail { color: var(--red); border: 1px solid var(--red); animation: blink 1s infinite; }
+        .anchor-surface { margin-top: 30px; background: #000; padding: 15px; border-left: 3px solid var(--green); font-size: 0.8em; overflow-x: auto; }
+        .error-overlay { display: none; color: var(--red); text-align: center; padding: 40px; }
+        a { color: inherit; }
+        @keyframes blink { 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
-    <div class="terminal">
-        <h1>NODE: WAITE PARK ANCHOR</h1>
-        <p class="motto">Build. Seal. Verify. Repeat.</p>
-        
-        <div class="status-grid">
-            <div class="card">
-                <h3>[ LAYER 0: DOCTRINE ]</h3>
-                <p>FILE: README.md</p>
-                <p>STATUS: <span class="verified">COMMITTED</span></p>
-            </div>
-            <div class="card">
-                <h3>[ LAYER 1: ANCHOR ]</h3>
-                <p>FILE: receipts/001_genesis.json</p>
-                <p>STATUS: <span class="verified">VERIFIED</span></p>
-            </div>
-            <div class="card">
-                <h3>[ LAYER 2: CONTINUITY ]</h3>
-                <p>FILE: ledgers/system_events.jsonl</p>
-                <p>STATUS: <span class="verified">ACTIVE / APPEND-ONLY</span></p>
-            </div>
-            <div class="card">
-                <h3>[ LAYER 3: LOGIC ]</h3>
-                <p>FILE: docs/ARCHITECTURE.md</p>
-                <p>STATUS: <span class="verified">FORMALIZED</span></p>
-            </div>
+
+<div id="audit-node">
+    <div id="ui-content">
+        <header>
+            <h1 style="margin:0; color:var(--green);">SYSTEM_AUDIT: <span id="node-id">LOADING...</span></h1>
+            <div class="heartbeat">OPERATOR: <span id="operator">---</span></div>
+        </header>
+
+        <div class="pulse-row">
+            <div>INTEGRITY PULSE: <span id="pulse-age">---</span></div>
+            <div id="audit-path" class="badge">---</div>
         </div>
 
-        <p style="margin-top: 2rem;">&gt; sys.identity: Jason Wisdom (Operator)</p>
-        <p>&gt; sys.mission: PROTECT OUR ASSETS</p>
+        <div class="grid">
+            <div class="card">T1: INTENT<span id="t1-badge" class="badge">---</span></div>
+            <div class="card">T2: DIGEST<span id="t2-badge" class="badge">---</span></div>
+            <div class="card">T3: ATTEST<span id="t3-badge" class="badge">---</span></div>
+        </div>
+
+        <div class="anchor-surface">
+            <strong>ROOT_HASH:</strong> <span id="root-hash">---</span><br>
+            <strong>SIGNER_ID:</strong> <span id="signer-id">---</span><br>
+            <strong>VERIFIER :</strong> <span id="verifier">---</span>
+        </div>
+        
+        <p style="font-size: 0.7em; margin-top: 20px; opacity: 0.6;">
+            <a href="https://github.com/jsonwisdom/COMPUTERWIZARD">[ VIEW SOURCE ]</a> | 
+            <a href="./verify.json">[ RAW JSON ]</a>
+        </p>
     </div>
+    <div id="ui-error" class="error-overlay">
+        <h2>CRITICAL: AUDIT INTERRUPTED</h2>
+        <p>Unable to fetch mechanical truth from verify.json.</p>
+    </div>
+</div>
+
+<script>
+    async function updateAudit() {
+        try {
+            const response = await fetch('./verify.json?t=' + Date.now());
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+
+            document.getElementById('ui-content').style.display = 'block';
+            document.getElementById('ui-error').style.display = 'none';
+
+            document.getElementById('node-id').textContent = data.node;
+            document.getElementById('operator').textContent = data.operator;
+            document.getElementById('root-hash').textContent = data.proof.root_hash;
+            document.getElementById('signer-id').textContent = data.proof.signer_id;
+            document.getElementById('verifier').textContent = data.proof.verifier_version;
+
+            const layers = {
+                't1-badge': data.integrity_mesh.t1_intent,
+                't2-badge': data.integrity_mesh.t2_digest,
+                't3-badge': data.integrity_mesh.t3_attestation
+            };
+
+            for (const [id, status] of Object.entries(layers)) {
+                const el = document.getElementById(id);
+                el.textContent = status;
+                el.className = 'badge ' + (status === 'PASS' ? 'status-pass' : 'status-fail');
+            }
+
+            const pathEl = document.getElementById('audit-path');
+            pathEl.textContent = 'PATH: ' + data.integrity_mesh.external_audit_path;
+            pathEl.className = 'badge ' + (data.integrity_mesh.external_audit_path === 'STABLE' ? 'status-pass' : 'status-fail');
+
+            const auditDate = new Date(data.last_audit_utc);
+            document.getElementById('pulse-age').textContent = auditDate.toLocaleString();
+
+        } catch (e) {
+            document.getElementById('ui-content').style.display = 'none';
+            document.getElementById('ui-error').style.display = 'block';
+        }
+    }
+    updateAudit();
+    setInterval(updateAudit, 60000);
+</script>
+
 </body>
 </html>
