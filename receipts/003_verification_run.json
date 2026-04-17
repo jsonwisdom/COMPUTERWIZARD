@@ -1,0 +1,17 @@
+{
+  "receipt_version": "1.0.0",
+  "id": "rcpt_003_verification_run",
+  "type": "SYSTEM_VERIFICATION",
+  "timestamp": "2026-04-17T02:08:54Z",
+  "node": "Waite Park Anchor",
+  "result": "SUCCESS",
+  "checks": {
+    "t2": "PASS",
+    "t3": "PASS",
+    "ledger": "PASS"
+  },
+  "artifact": {
+    "log_file": "verification.log"
+  },
+  "status": "VERIFIED"
+}
