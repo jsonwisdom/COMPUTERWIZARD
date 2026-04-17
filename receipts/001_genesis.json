@@ -1,0 +1,24 @@
+{
+  "receipt_version": "1.0.0",
+  "id": "rcpt_001_genesis_9c58e03f",
+  "type": "SYSTEM_INITIALIZATION",
+  "timestamp": "2026-04-16T20:35:46Z",
+  "node": "Waite Park Anchor",
+  "operator": "Jason Wisdom",
+  "subject": {
+    "target_repo": "jsonwisdom/COMPUTERWIZARD",
+    "root_commit": "9c58e03f589dc621b993e2721e9b37d6c66f0f16",
+    "directive": "PROTECT OUR ASSETS"
+  },
+  "claims": [
+    "Identity aligned with ABI Domain",
+    "Zero-Trust root established",
+    "Deterministic audit trail initiated"
+  ],
+  "verification": {
+    "method": "SHA-256",
+    "hash": "4a7f92026e6d7a123e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+    "signature_type": "FIDO2_ATTESTATION_PENDING"
+  },
+  "status": "SEALED"
+}
