@@ -4,3 +4,4 @@
 {"event":"APPEND_DISCIPLINE_ENFORCED","trigger":"GitHub SHA mismatch","outcome":"Success","timestamp":"2026-04-16T20:55:20Z"}
 {"event":"T2_VERIFICATION_COMPLETE","receipt_id":"rcpt_001_genesis_9c58e03f","commit_sha":"4e1ae70d10c87c8991c97de6d1330b2da12f93d1","timestamp":"2026-04-16T21:15:00Z","actor":"system","status":"VERIFIED"}
 {"event":"T3_ATTESTATION_INITIATED","receipt_id":"rcpt_002_attestation_pending","commit_sha":"34ed2ee4e51db117663de46fc8ef5e174ae614ef","timestamp":"2026-04-16T21:30:00Z","actor":"operator","signer_id":"WAITE_PARK_ANCHOR_KMS_01","status":"PENDING"}
+{"event":"T3_ATTESTATION_COMPLETE","receipt_id":"rcpt_002_attestation_pending","commit_sha":"8e4da00691f739db732b61ac09bd4b94d4556e9d","timestamp":"2026-04-17T02:05:00Z","actor":"system","signer_id":"WAITE_PARK_ANCHOR_KMS_01","status":"ATTESTED"}
