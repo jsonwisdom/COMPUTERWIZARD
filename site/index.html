@@ -5,40 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>COMPUTERWIZARD — Attention on Base</title>
 <style>
-body{background:#05070d;color:white;font-family:Arial;margin:0}
-.wrap{padding:20px;max-width:1100px;margin:auto}
-.card{background:#0b1020;padding:20px;border-radius:16px;margin-top:20px;border:1px solid #1d4ed8}
-button{padding:12px 16px;border-radius:10px;border:none;background:#2563eb;color:white;font-weight:bold;cursor:pointer}
+:root{--bg:#05070d;--panel:#0b1020;--line:#1d4ed8;--text:#fff;--muted:#cbd5e1;--accent:#2563eb;--accent2:#60a5fa}
+*{box-sizing:border-box}
+body{background:radial-gradient(circle at top,#0b1636 0%,#05070d 45%,#02040a 100%);color:var(--text);font-family:Arial,sans-serif;margin:0}
+.wrap{padding:20px;max-width:1180px;margin:auto}
+h1,h2,h3{margin:0 0 12px}
+p{line-height:1.6;color:var(--muted)}
+.heroimg{width:100%;border-radius:16px;display:block}
+.card{background:rgba(11,16,32,.92);padding:20px;border-radius:18px;margin-top:20px;border:1px solid rgba(59,130,246,.45)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.loop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.step{background:#0f172a;border:1px solid rgba(96,165,250,.28);padding:16px;border-radius:16px}
+.kicker{font-size:12px;letter-spacing:.12em;color:var(--accent2);font-weight:700}
+button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
+pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2)}
+.glyphs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.glyph{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700}
+.quote{font-size:1.3rem;font-weight:700;color:#eff6ff}
+@media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>ATTENTION ON BASE</h1>
-<img src="../assets/attention-on-base-2026-04-22.jpeg" style="width:100%;border-radius:12px"/>
+  <h1>ATTENTION ON BASE</h1>
+  <img class="heroimg" src="../assets/attention-on-base-2026-04-22.jpeg" alt="Attention on Base poster">
 
-<div class="card">
-<h2>⚡ Filecoin Purpose Engine</h2>
-<p>Gamified preservation at machine speed.</p>
-<button onclick="runLoop()">RUN LOOP</button>
-<pre id="output"></pre>
-</div>
+  <div class="card">
+    <h2>⚡ Filecoin Purpose Engine</h2>
+    <p>Gamified preservation at machine speed.</p>
+    <button onclick="runLoop()">RUN LOOP</button>
+    <pre id="output"></pre>
+  </div>
+
+  <div class="card">
+    <h2>🕯️ Friar Panel — OODA + Ockham’s Razor</h2>
+    <p id="friar-thesis">Loading friar doctrine…</p>
+    <div class="glyphs" id="glyphs"></div>
+    <div class="loop" id="friar-loop" style="margin-top:16px"></div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0">
+        <h3>Compressed Formula</h3>
+        <div class="quote" id="formula"></div>
+        <p id="machine-line"></p>
+      </div>
+      <div class="card" style="margin-top:0">
+        <h3>Friar Protocol</h3>
+        <pre id="friar-protocol"></pre>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>Spell</h3>
+      <div class="quote" id="spell"></div>
+      <p id="human-line"></p>
+    </div>
+  </div>
 
 <script>
 async function runLoop(){
  const res = await fetch('filecoin-purpose.json');
  const data = await res.json();
  let log = '';
- data.game_loop.forEach((step,i)=>{
-  log += (i+1)+'. '+step+'\n';
- });
+ data.game_loop.forEach((step,i)=>{ log += (i+1)+'. '+step+'\n'; });
  log += '\nScore Model:\n';
- Object.entries(data.points).forEach(([k,v])=>{
-  log += k+': '+v+' pts\n';
- });
+ Object.entries(data.points).forEach(([k,v])=>{ log += k+': '+v+' pts\n'; });
  document.getElementById('output').textContent = log;
 }
-</script>
 
+async function renderFriar(){
+ const res = await fetch('friar-ooda.json');
+ const data = await res.json();
+ document.getElementById('friar-thesis').textContent = data.thesis;
+ document.getElementById('formula').textContent = data.compressed_formula.ooda_razor;
+ document.getElementById('machine-line').textContent = data.compressed_formula.machine_translation;
+ document.getElementById('spell').textContent = data.spell;
+ document.getElementById('human-line').textContent = data.human_line;
+
+ const glyphs = document.getElementById('glyphs');
+ glyphs.innerHTML = '';
+ Object.entries(data.glyphs).forEach(([g,label]) => {
+   const el = document.createElement('div');
+   el.className = 'glyph';
+   el.textContent = g + ' ' + label;
+   glyphs.appendChild(el);
+ });
+
+ const loop = document.getElementById('friar-loop');
+ loop.innerHTML = '';
+ data.loop.forEach(item => {
+   const card = document.createElement('div');
+   card.className = 'step';
+   card.innerHTML = '<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>';
+   loop.appendChild(card);
+ });
+
+ const protocol = document.getElementById('friar-protocol');
+ protocol.textContent = 'Vows:\n- ' + data.friar_protocol.vows.join('\n- ') + '\n\nAnti-patterns:\n- ' + data.friar_protocol.anti_patterns.join('\n- ');
+}
+
+renderFriar();
+</script>
 </div>
 </body>
 </html>
