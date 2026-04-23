@@ -1,0 +1,92 @@
+{
+  "title": "OODA Loop + Ockham’s Razor",
+  "subtitle": "Friar Edition",
+  "anchor": "jaywisdom.eth learning mode",
+  "version": "1.0.0",
+  "namespace": "protocol.friar_ooda_v1",
+  "created_at": "2026-04-22T00:00:00Z",
+  "status": "locked",
+  "assessment": "Clean. Structured. Ready to ship as doctrine, UI copy, JSON config, or receipt payload.",
+  "thesis": "The friar does not panic, decorate, or overclaim. He observes cleanly, reduces noise, and moves only on what survives verification.",
+  "loop": [
+    {
+      "step": "OBSERVE",
+      "friar_rule": "Look at the claim before the costume around the claim.",
+      "ockham_move": "Separate event from rhetoric.",
+      "question": "What actually happened?"
+    },
+    {
+      "step": "ORIENT",
+      "friar_rule": "Strip excess assumptions, titles, and emotional inflation.",
+      "ockham_move": "Prefer the smallest sufficient explanation.",
+      "question": "What is the simplest model that still fits the evidence?"
+    },
+    {
+      "step": "DECIDE",
+      "friar_rule": "Admit only what can be stated clearly and checked later.",
+      "ockham_move": "Reduce ambiguity before action.",
+      "question": "What claim survives compression?"
+    },
+    {
+      "step": "ACT",
+      "friar_rule": "Publish the receipt, not the theater.",
+      "ockham_move": "Turn the verified claim into a durable artifact.",
+      "question": "What do we anchor, log, or prove?"
+    }
+  ],
+  "friar_protocol": {
+    "vows": [
+      "poverty of assumptions",
+      "discipline of language",
+      "hostility to inflated authority",
+      "loyalty to replayable truth"
+    ],
+    "anti_patterns": [
+      "headline as evidence",
+      "authority as proof",
+      "complexity as prestige",
+      "narrative substitution"
+    ]
+  },
+  "compressed_formula": {
+    "ooda_razor": "observe -> reduce -> decide -> anchor",
+    "machine_translation": "input claim, remove noise, keep proof, commit state"
+  },
+  "compressed_read": {
+    "formula": "observe -> reduce -> decide -> anchor",
+    "meaning": "Look plainly, remove noise, keep only what survives compression, then publish proof."
+  },
+  "glyphs": {
+    "👁️": "observe",
+    "✂️": "razor / reduction",
+    "🧭": "orient",
+    "⚖️": "decide",
+    "🧾": "receipt",
+    "🧱": "anchor",
+    "🕯️": "friar mode"
+  },
+  "spell": "🕯️ 👁️ -> ✂️ -> 🧭 -> ⚖️ -> 🧾 -> 🧱",
+  "human_line": "Friar edition means less ego, less noise, less narrative, more proof.",
+  "best_next_uses": [
+    {
+      "target": "site/friar-ooda.json",
+      "purpose": "machine-readable doctrine layer"
+    },
+    {
+      "target": "site/index.html",
+      "purpose": "render as a Friar Edition panel with glyphs and loop cards"
+    },
+    {
+      "target": "README.md",
+      "purpose": "add as operating philosophy"
+    },
+    {
+      "target": "receipt payload",
+      "purpose": "anchor the doctrine as a named protocol object"
+    }
+  ],
+  "jay_recommendation": {
+    "move": "ship it into COMPUTERWIZARD as a separate JSON artifact, not just chat text",
+    "reason": "This is doctrine with reuse value. It belongs in the repo as a callable concept."
+  }
+}
