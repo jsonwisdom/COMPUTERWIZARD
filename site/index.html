@@ -9,23 +9,16 @@
 *{box-sizing:border-box}
 body{background:radial-gradient(circle at top,#0b1636 0%,#05070d 45%,#02040a 100%);color:var(--text);font-family:Arial,sans-serif;margin:0}
 .wrap{padding:20px;max-width:1180px;margin:auto}
-h1,h2,h3{margin:0 0 12px}
-p{line-height:1.6;color:var(--muted)}
-.heroimg{width:100%;border-radius:16px;display:block}
-.card{background:rgba(11,16,32,.92);padding:20px;border-radius:18px;margin-top:20px;border:1px solid rgba(59,130,246,.45)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.loop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.step{background:#0f172a;border:1px solid rgba(96,165,250,.28);padding:16px;border-radius:16px}
-.kicker{font-size:12px;letter-spacing:.12em;color:var(--accent2);font-weight:700}
+h1,h2,h3{margin:0 0 12px}p{line-height:1.6;color:var(--muted)}
+.heroimg{width:100%;border-radius:16px;display:block}.card{background:rgba(11,16,32,.92);padding:20px;border-radius:18px;margin-top:20px;border:1px solid rgba(59,130,246,.45)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.loop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.step{background:#0f172a;border:1px solid rgba(96,165,250,.28);padding:16px;border-radius:16px}.kicker{font-size:12px;letter-spacing:.12em;color:var(--accent2);font-weight:700}
 button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
 textarea,input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(96,165,250,.28);background:#08101f;color:white}
-pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2);overflow:auto}
-.glyphs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.glyph{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700}
-.quote{font-size:1.3rem;font-weight:700;color:#eff6ff}
-.small{font-size:.92rem;color:#93c5fd}
-@media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
+pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2);overflow:auto}.glyphs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.glyph{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700}.quote{font-size:1.3rem;font-weight:700;color:#eff6ff}.small{font-size:.92rem;color:#93c5fd}
+.pill{display:inline-block;padding:8px 10px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);margin:4px 6px 0 0;color:#dbeafe}.ok{color:#86efac}.warn{color:#fcd34d}
+@media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}}@media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -74,130 +67,87 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
       <div>
         <label class="small" for="source">Source / Context</label>
         <input id="source" placeholder="source url, doc name, screenshot, witness note">
-        <div style="margin-top:12px">
-          <button onclick="runFriarReceipt()">GENERATE RECEIPT</button>
-        </div>
+        <div style="margin-top:12px"><button onclick="runFriarReceipt()">GENERATE RECEIPT</button></div>
       </div>
     </div>
     <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0"><h3>Compressed Claim</h3><pre id="compressedClaim"></pre></div>
+      <div class="card" style="margin-top:0"><h3>Friar Questions</h3><pre id="friarQuestions"></pre></div>
+    </div>
+    <div class="card" style="margin-top:18px"><h3>Anchor-Ready Receipt</h3><pre id="receiptOutput"></pre></div>
+  </div>
+
+  <div class="card">
+    <h2>⛓️ Anchor Pipeline</h2>
+    <p>Simulated CID + Filecoin durability + Base anchor payload builder. No fake upload claims. This page computes deterministic values locally and prepares the exact objects you would anchor next.</p>
+    <div class="grid">
       <div class="card" style="margin-top:0">
-        <h3>Compressed Claim</h3>
-        <pre id="compressedClaim"></pre>
+        <h3>Pipeline Status</h3>
+        <div id="pipelineStatus"></div>
       </div>
       <div class="card" style="margin-top:0">
-        <h3>Friar Questions</h3>
-        <pre id="friarQuestions"></pre>
+        <h3>Actions</h3>
+        <button onclick="buildAnchorPipeline()">BUILD ANCHOR PIPELINE</button>
+        <p class="small">Requires a generated friar receipt first.</p>
       </div>
     </div>
-    <div class="card" style="margin-top:18px">
-      <h3>Anchor-Ready Receipt</h3>
-      <pre id="receiptOutput"></pre>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0"><h3>Simulated Storage Layer</h3><pre id="storageOutput"></pre></div>
+      <div class="card" style="margin-top:0"><h3>Base Anchor Payload</h3><pre id="anchorOutput"></pre></div>
     </div>
   </div>
 
 <script>
 let friarData = null;
+let lastReceipt = null;
 
 async function runLoop(){
  const res = await fetch('filecoin-purpose.json');
  const data = await res.json();
- let log = '';
- data.game_loop.forEach((step,i)=>{ log += (i+1)+'. '+step+'\n'; });
- log += '\nScore Model:\n';
- Object.entries(data.points).forEach(([k,v])=>{ log += k+': '+v+' pts\n'; });
+ let log=''; data.game_loop.forEach((step,i)=> log += (i+1)+'. '+step+'\n');
+ log += '\nScore Model:\n'; Object.entries(data.points).forEach(([k,v])=> log += k+': '+v+' pts\n');
  document.getElementById('output').textContent = log;
 }
-
-function cleanText(text){
- return text
-  .replace(/https?:\/\/\S+/g,'')
-  .replace(/\s+/g,' ')
-  .replace(/[“”]/g,'"')
-  .replace(/[‘’]/g,"'")
-  .trim();
-}
-
-function compressClaim(text){
- const cleaned = cleanText(text);
- const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
- let best = sentences.sort((a,b)=>a.length-b.length)[0] || cleaned;
- if(best.length > 220) best = best.slice(0,220).trim() + '…';
- return best;
-}
-
-async function sha256Hex(text){
- const bytes = new TextEncoder().encode(text);
- const digest = await crypto.subtle.digest('SHA-256', bytes);
- return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+function cleanText(text){return text.replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").trim();}
+function compressClaim(text){const cleaned=cleanText(text); const sentences=cleaned.split(/(?<=[.!?])\s+/).filter(Boolean); let best=sentences.sort((a,b)=>a.length-b.length)[0]||cleaned; if(best.length>220) best=best.slice(0,220).trim()+'…'; return best;}
+async function sha256Hex(text){const bytes=new TextEncoder().encode(text); const digest=await crypto.subtle.digest('SHA-256',bytes); return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+function fakeCidFromHash(hash){return 'bafyfriar'+hash.slice(0,24);} 
+function fakeDealIdFromHash(hash){return 'deal_'+hash.slice(0,12);} 
+function fakeTxCalldata(rootHash,cid){return {to:'0x0000000000000000000000000000000000000000',data:'0x'+rootHash.slice(0,64)+cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128)};}
 
 async function runFriarReceipt(){
- const claim = document.getElementById('claim').value.trim();
- const source = document.getElementById('source').value.trim();
- if(!claim){
-   document.getElementById('receiptOutput').textContent = 'Paste a claim first.';
-   return;
- }
- const compressed = compressClaim(claim);
- const claimHash = await sha256Hex(cleanText(claim));
- const compressedHash = await sha256Hex(compressed);
- const now = new Date().toISOString();
- const questions = friarData.loop.map(x => x.step + ': ' + x.question).join('\n');
+ const claim=document.getElementById('claim').value.trim(); const source=document.getElementById('source').value.trim();
+ if(!claim){document.getElementById('receiptOutput').textContent='Paste a claim first.'; return;}
+ const compressed=compressClaim(claim); const claimHash=await sha256Hex(cleanText(claim)); const compressedHash=await sha256Hex(compressed); const now=new Date().toISOString();
+ const questions=friarData.loop.map(x=>x.step+': '+x.question).join('\n');
+ lastReceipt={protocol:friarData.namespace,version:friarData.version,mode:'friar_receipts',created_at:now,anchor:friarData.anchor,input_claim:cleanText(claim),input_claim_hash:claimHash,compressed_claim:compressed,compressed_claim_hash:compressedHash,source:source||'unspecified',ooda_formula:friarData.compressed_formula.ooda_razor,machine_translation:friarData.compressed_formula.machine_translation,friar_spell:friarData.spell,human_line:friarData.human_line,status:'anchor-ready'};
+ document.getElementById('compressedClaim').textContent=compressed; document.getElementById('friarQuestions').textContent=questions; document.getElementById('receiptOutput').textContent=JSON.stringify(lastReceipt,null,2);
+ setPipelineStatus(['receipt ready']);
+}
+function setPipelineStatus(items){document.getElementById('pipelineStatus').innerHTML=items.map(x=>'<span class="pill">'+x+'</span>').join('');}
 
- const receipt = {
-   protocol: friarData.namespace,
-   version: friarData.version,
-   mode: 'friar_receipts',
-   created_at: now,
-   anchor: friarData.anchor,
-   input_claim: cleanText(claim),
-   input_claim_hash: claimHash,
-   compressed_claim: compressed,
-   compressed_claim_hash: compressedHash,
-   source: source || 'unspecified',
-   ooda_formula: friarData.compressed_formula.ooda_razor,
-   machine_translation: friarData.compressed_formula.machine_translation,
-   friar_spell: friarData.spell,
-   human_line: friarData.human_line,
-   status: 'anchor-ready'
- };
-
- document.getElementById('compressedClaim').textContent = compressed;
- document.getElementById('friarQuestions').textContent = questions;
- document.getElementById('receiptOutput').textContent = JSON.stringify(receipt,null,2);
+async function buildAnchorPipeline(){
+ if(!lastReceipt){document.getElementById('storageOutput').textContent='Generate friar receipt first.'; document.getElementById('anchorOutput').textContent='No receipt loaded.'; setPipelineStatus(['waiting for receipt']); return;}
+ const canonical=JSON.stringify(lastReceipt);
+ const receiptHash=await sha256Hex(canonical);
+ const simulatedCid=fakeCidFromHash(receiptHash);
+ const simulatedDealId=fakeDealIdFromHash(receiptHash);
+ const merkleRoot=await sha256Hex(lastReceipt.compressed_claim_hash + receiptHash);
+ const storageLayer={mode:'simulated',receipt_hash:receiptHash,ipfs:{cid:simulatedCid,status:'derived-locally'},filecoin:{deal_id:simulatedDealId,status:'simulated-durability-layer'},merkle_root:merkleRoot};
+ const anchorPayload={network:'Base',anchor_mode:'prepared_not_sent',ens:lastReceipt.anchor,receipt_hash:receiptHash,cid:simulatedCid,merkle_root:merkleRoot,tx_payload:fakeTxCalldata(merkleRoot,simulatedCid),next_steps:['Pin receipt JSON to IPFS','Confirm Filecoin-backed storage','Write CID/root into ENS text record or receipt contract','Broadcast Base transaction from wallet']};
+ document.getElementById('storageOutput').textContent=JSON.stringify(storageLayer,null,2);
+ document.getElementById('anchorOutput').textContent=JSON.stringify(anchorPayload,null,2);
+ setPipelineStatus(['receipt ready','cid simulated','filecoin simulated','base payload prepared']);
 }
 
 async function renderFriar(){
- const res = await fetch('friar-ooda.json');
- friarData = await res.json();
- document.getElementById('friar-thesis').textContent = friarData.thesis;
- document.getElementById('formula').textContent = friarData.compressed_formula.ooda_razor;
- document.getElementById('machine-line').textContent = friarData.compressed_formula.machine_translation;
- document.getElementById('spell').textContent = friarData.spell;
- document.getElementById('human-line').textContent = friarData.human_line;
-
- const glyphs = document.getElementById('glyphs');
- glyphs.innerHTML = '';
- Object.entries(friarData.glyphs).forEach(([g,label]) => {
-   const el = document.createElement('div');
-   el.className = 'glyph';
-   el.textContent = g + ' ' + label;
-   glyphs.appendChild(el);
- });
-
- const loop = document.getElementById('friar-loop');
- loop.innerHTML = '';
- friarData.loop.forEach(item => {
-   const card = document.createElement('div');
-   card.className = 'step';
-   card.innerHTML = '<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>';
-   loop.appendChild(card);
- });
-
- const protocol = document.getElementById('friar-protocol');
- protocol.textContent = 'Vows:\n- ' + friarData.friar_protocol.vows.join('\n- ') + '\n\nAnti-patterns:\n- ' + friarData.friar_protocol.anti_patterns.join('\n- ');
+ const res=await fetch('friar-ooda.json'); friarData=await res.json();
+ document.getElementById('friar-thesis').textContent=friarData.thesis; document.getElementById('formula').textContent=friarData.compressed_formula.ooda_razor; document.getElementById('machine-line').textContent=friarData.compressed_formula.machine_translation; document.getElementById('spell').textContent=friarData.spell; document.getElementById('human-line').textContent=friarData.human_line;
+ const glyphs=document.getElementById('glyphs'); glyphs.innerHTML=''; Object.entries(friarData.glyphs).forEach(([g,label])=>{const el=document.createElement('div'); el.className='glyph'; el.textContent=g+' '+label; glyphs.appendChild(el);});
+ const loop=document.getElementById('friar-loop'); loop.innerHTML=''; friarData.loop.forEach(item=>{const card=document.createElement('div'); card.className='step'; card.innerHTML='<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>'; loop.appendChild(card);});
+ document.getElementById('friar-protocol').textContent='Vows:\n- '+friarData.friar_protocol.vows.join('\n- ')+'\n\nAnti-patterns:\n- '+friarData.friar_protocol.anti_patterns.join('\n- ');
+ setPipelineStatus(['waiting for receipt']);
 }
-
 renderFriar();
 </script>
 </div>
