@@ -1,0 +1,70 @@
+{
+  "project": "COMPUTERWIZARD",
+  "mode": "machine-speed gamification",
+  "network": "Filecoin",
+  "purpose": {
+    "thesis": "Store what matters. Prove what persists. Reward durable truth.",
+    "why": [
+      "Turn storage into visible public purpose",
+      "Make preservation measurable, not sentimental",
+      "Reward operators for keeping important artifacts durable",
+      "Connect attention, proof, and permanence into one loop"
+    ]
+  },
+  "game_loop": [
+    "Capture artifact",
+    "Hash artifact",
+    "Pin to IPFS",
+    "Back with Filecoin durability",
+    "Publish CID",
+    "Anchor receipt on Base",
+    "Award score",
+    "Repeat"
+  ],
+  "roles": [
+    {
+      "name": "Scout",
+      "purpose": "Find artifacts worth preserving before they drift or disappear"
+    },
+    {
+      "name": "Curator",
+      "purpose": "Normalize metadata and reduce noise before storage"
+    },
+    {
+      "name": "Preserver",
+      "purpose": "Push content into IPFS and durable Filecoin-backed storage"
+    },
+    {
+      "name": "Verifier",
+      "purpose": "Replay hashes, CIDs, and receipts to confirm continuity"
+    },
+    {
+      "name": "Witness",
+      "purpose": "Surface the preserved truth back to the public interface"
+    }
+  ],
+  "points": {
+    "capture": 5,
+    "canonicalize": 10,
+    "cid_publish": 15,
+    "filecoin_durability": 25,
+    "base_anchor": 30,
+    "successful_replay": 40
+  },
+  "badges": [
+    "First Capture",
+    "CID Smith",
+    "Durability Maximalist",
+    "Receipt Runner",
+    "Replay Knight",
+    "Archive Paladin"
+  ],
+  "anti_cheat": [
+    "No points without content hash",
+    "No durability badge without CID",
+    "No anchor points without transaction reference",
+    "No replay points if hash or CID mismatch"
+  ],
+  "formula": "purpose = attention × durability × replayability",
+  "human_line": "Filecoin becomes a game for preserving reality before it gets memory-holed."
+}
