@@ -5,21 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>COMPUTERWIZARD — Attention on Base</title>
 <style>
-:root{--bg:#05070d;--panel:#0b1020;--line:#1d4ed8;--text:#fff;--muted:#cbd5e1;--accent:#2563eb;--accent2:#60a5fa}
-*{box-sizing:border-box}
-body{background:radial-gradient(circle at top,#0b1636 0%,#05070d 45%,#02040a 100%);color:var(--text);font-family:Arial,sans-serif;margin:0}
-.wrap{padding:20px;max-width:1180px;margin:auto}
-h1,h2,h3{margin:0 0 12px}p{line-height:1.6;color:var(--muted)}
+:root{--bg:#05070d;--panel:#0b1020;--line:#1d4ed8;--text:#fff;--muted:#cbd5e1;--accent:#2563eb;--accent2:#60a5fa;--ok:#86efac;--warn:#fcd34d;--bad:#fca5a5}
+*{box-sizing:border-box} body{background:radial-gradient(circle at top,#0b1636 0%,#05070d 45%,#02040a 100%);color:var(--text);font-family:Arial,sans-serif;margin:0}
+.wrap{padding:20px;max-width:1180px;margin:auto} h1,h2,h3{margin:0 0 12px} p{line-height:1.6;color:var(--muted)}
 .heroimg{width:100%;border-radius:16px;display:block}.card{background:rgba(11,16,32,.92);padding:20px;border-radius:18px;margin-top:20px;border:1px solid rgba(59,130,246,.45)}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.loop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .step{background:#0f172a;border:1px solid rgba(96,165,250,.28);padding:16px;border-radius:16px}.kicker{font-size:12px;letter-spacing:.12em;color:var(--accent2);font-weight:700}
-button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
+button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer} button[disabled]{opacity:.5;cursor:not-allowed}
 textarea,input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(96,165,250,.28);background:#08101f;color:white}
 pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2);overflow:auto}.glyphs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.glyph{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700}.quote{font-size:1.3rem;font-weight:700;color:#eff6ff}.small{font-size:.92rem;color:#93c5fd}
-.pill{display:inline-block;padding:8px 10px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);margin:4px 6px 0 0;color:#dbeafe}.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.hidden{display:none}
-@media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}}@media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
+.glyph,.pill{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700;display:inline-block;margin:4px 6px 0 0}.quote{font-size:1.3rem;font-weight:700;color:#eff6ff}.small{font-size:.92rem;color:#93c5fd}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.hidden{display:none}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+@media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}} @media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
 </style>
+<script src="https://unpkg.com/viem@2.21.57/_esm/index.js" type="module"></script>
 </head>
 <body>
 <div class="wrap">
@@ -39,36 +38,18 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
     <div class="glyphs" id="glyphs"></div>
     <div class="loop" id="friar-loop" style="margin-top:16px"></div>
     <div class="grid" style="margin-top:18px">
-      <div class="card" style="margin-top:0">
-        <h3>Compressed Formula</h3>
-        <div class="quote" id="formula"></div>
-        <p id="machine-line"></p>
-      </div>
-      <div class="card" style="margin-top:0">
-        <h3>Friar Protocol</h3>
-        <pre id="friar-protocol"></pre>
-      </div>
+      <div class="card" style="margin-top:0"><h3>Compressed Formula</h3><div class="quote" id="formula"></div><p id="machine-line"></p></div>
+      <div class="card" style="margin-top:0"><h3>Friar Protocol</h3><pre id="friar-protocol"></pre></div>
     </div>
-    <div class="card" style="margin-top:18px">
-      <h3>Spell</h3>
-      <div class="quote" id="spell"></div>
-      <p id="human-line"></p>
-    </div>
+    <div class="card" style="margin-top:18px"><h3>Spell</h3><div class="quote" id="spell"></div><p id="human-line"></p></div>
   </div>
 
   <div class="card">
     <h2>🧾 Friar Receipts Mode</h2>
     <p>Paste a claim. The friar strips noise, compresses language, and emits an anchor-ready receipt payload.</p>
     <div class="grid">
-      <div>
-        <label class="small" for="claim">Input Claim</label>
-        <textarea id="claim" rows="8" placeholder="Paste a claim, headline, or narrative here..."></textarea>
-      </div>
-      <div>
-        <label class="small" for="source">Source / Context</label>
-        <input id="source" placeholder="source url, doc name, screenshot, witness note">
-        <div style="margin-top:12px"><button onclick="runFriarReceipt()">GENERATE RECEIPT</button></div>
-      </div>
+      <div><label class="small" for="claim">Input Claim</label><textarea id="claim" rows="8" placeholder="Paste a claim, headline, or narrative here..."></textarea></div>
+      <div><label class="small" for="source">Source / Context</label><input id="source" placeholder="source url, doc name, screenshot, witness note"><div style="margin-top:12px"><button onclick="runFriarReceipt()">GENERATE RECEIPT</button></div></div>
     </div>
     <div class="grid" style="margin-top:18px">
       <div class="card" style="margin-top:0"><h3>Compressed Claim</h3><pre id="compressedClaim"></pre></div>
@@ -81,137 +62,93 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
     <h2>⛓️ Anchor Pipeline</h2>
     <p>Prepared payload mode and real IPFS pin mode now live side by side. One prepares exact deterministic objects locally. The other only claims success when a provider returns a real CID.</p>
     <div class="grid">
-      <div class="card" style="margin-top:0">
-        <h3>Pipeline Status</h3>
-        <div id="pipelineStatus"></div>
-      </div>
+      <div class="card" style="margin-top:0"><h3>Pipeline Status</h3><div id="pipelineStatus"></div></div>
       <div class="card" style="margin-top:0">
         <h3>Actions</h3>
-        <div class="row">
-          <button onclick="buildAnchorPipeline()">BUILD ANCHOR PIPELINE</button>
-          <button onclick="realIpfsPin()">🌐 REAL IPFS PIN</button>
-        </div>
+        <div class="row"><button onclick="buildAnchorPipeline()">BUILD ANCHOR PIPELINE</button><button onclick="realIpfsPin()">🌐 REAL IPFS PIN</button></div>
         <p class="small">Requires a generated friar receipt first.</p>
-        <div class="row small">
-          <label><input type="radio" name="ipfs_provider" value="pinata" checked> Pinata</label>
-          <label><input type="radio" name="ipfs_provider" value="web3"> Web3.Storage</label>
-        </div>
+        <div class="row small"><label><input type="radio" name="ipfs_provider" value="pinata" checked> Pinata</label><label><input type="radio" name="ipfs_provider" value="web3"> Web3.Storage</label></div>
       </div>
     </div>
     <div class="grid" style="margin-top:18px">
       <div class="card" style="margin-top:0"><h3>Simulated Storage Layer</h3><pre id="storageOutput"></pre></div>
       <div class="card" style="margin-top:0"><h3>Base Anchor Payload</h3><pre id="anchorOutput"></pre></div>
     </div>
-    <div class="card hidden" id="realIpfsResult" style="margin-top:18px">
-      <h3>Real IPFS Pin Result</h3>
-      <p><strong>Real CID:</strong> <span class="mono" id="real_cid_display"></span></p>
-      <p><strong>Canonical Hash:</strong> <span class="mono" id="real_canonical_hash"></span></p>
-      <pre id="real_ipfs_result"></pre>
+    <div class="card hidden" id="realIpfsResult" style="margin-top:18px"><h3>Real IPFS Pin Result</h3><p><strong>Real CID:</strong> <span class="mono" id="real_cid_display"></span></p><p><strong>Canonical Hash:</strong> <span class="mono" id="real_canonical_hash"></span></p><pre id="real_ipfs_result"></pre></div>
+  </div>
+
+  <div class="card">
+    <h2>🚀 Base Execution</h2>
+    <p>Real wallet connection, real transaction submission, real confirmation. No anchored state until the chain says so.</p>
+    <div class="grid">
+      <div class="card" style="margin-top:0"><h3>Wallet</h3><button onclick="connectWallet()">🔌 CONNECT WALLET</button><p><strong>Status:</strong> <span class="mono" id="walletStatus">not connected</span></p></div>
+      <div class="card" style="margin-top:0"><h3>Send</h3><button id="baseSendButton" onclick="sendBaseTx()" disabled>🚀 SEND TO BASE</button><p class="small">Enabled after anchor payload exists.</p></div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0"><h3>State</h3><p><span class="mono" id="baseState">pre-anchor</span></p><p id="baseStateHuman" class="warn">not anchored</p></div>
+      <div class="card" style="margin-top:0"><h3>Transaction</h3><p><strong>Tx Hash:</strong> <span class="mono" id="txHash"></span></p><a id="explorerLink" target="_blank" class="small"></a><pre id="baseReceiptOutput"></pre></div>
     </div>
   </div>
 
-<script>
-let friarData = null;
-let lastReceipt = null;
-let currentReceiptReal = null;
+  <div class="card">
+    <h2>🏷️ ENS Anchor</h2>
+    <p>Writes the real CID, merkle root, tx hash, and timestamp to the live resolver for <span class="mono">jaywisdom.base.eth</span>. Verification only turns green when reads match writes.</p>
+    <div class="grid">
+      <div class="card" style="margin-top:0">
+        <h3>Actions</h3>
+        <div class="row"><button id="ensAnchorButton" onclick="ensAnchor()" disabled>ENS ANCHOR</button><button id="ensVerifyButton" onclick="verifyEns()" disabled>VERIFY ENS</button></div>
+        <p class="small">ENS write unlocks only after Base tx is confirmed and a real CID exists.</p>
+      </div>
+      <div class="card" style="margin-top:0"><h3>ENS State</h3><p><span class="mono" id="ensState">pre-ens</span></p><p id="ensStateHuman" class="warn">waiting for confirmed tx + real cid</p></div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0"><h3>Resolver + Writes</h3><pre id="ensWriteOutput"></pre></div>
+      <div class="card" style="margin-top:0"><h3>Verification</h3><pre id="ensVerifyOutput"></pre><p id="ensVerifyHuman" class="warn"></p></div>
+    </div>
+  </div>
+</div>
 
-async function runLoop(){
- const res = await fetch('filecoin-purpose.json');
- const data = await res.json();
- let log=''; data.game_loop.forEach((step,i)=> log += (i+1)+'. '+step+'\n');
- log += '\nScore Model:\n'; Object.entries(data.points).forEach(([k,v])=> log += k+': '+v+' pts\n');
- document.getElementById('output').textContent = log;
-}
-function cleanText(text){return text.replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").trim();}
-function compressClaim(text){const cleaned=cleanText(text); const sentences=cleaned.split(/(?<=[.!?])\s+/).filter(Boolean); let best=sentences.sort((a,b)=>a.length-b.length)[0]||cleaned; if(best.length>220) best=best.slice(0,220).trim()+'…'; return best;}
-async function sha256Hex(text){const bytes=new TextEncoder().encode(text); const digest=await crypto.subtle.digest('SHA-256',bytes); return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
-function canonicalize(value){if(value===null||typeof value!=='object') return JSON.stringify(value); if(Array.isArray(value)) return '['+value.map(canonicalize).join(',')+']'; const keys=Object.keys(value).sort(); return '{'+keys.map(k=>JSON.stringify(k)+':'+canonicalize(value[k])).join(',')+'}';}
-function fakeCidFromHash(hash){return 'bafyfriar'+hash.slice(0,24);} 
-function fakeDealIdFromHash(hash){return 'deal_'+hash.slice(0,12);} 
-function fakeTxCalldata(rootHash,cid){return {to:'0x0000000000000000000000000000000000000000',data:'0x'+rootHash.slice(0,64)+cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128)};}
+<script type="module">
+import { createWalletClient, custom, createPublicClient, http } from 'https://unpkg.com/viem@2.21.57/_esm/index.js';
+import { base, normalize, namehash } from 'https://unpkg.com/viem@2.21.57/_esm/chains/index.js';
 
-async function realIpfsPinPinata(receipt, pinataJwt){
- const canonical = canonicalize(receipt);
- const canonicalHash = await sha256Hex(canonical);
- const body = { pinataContent: JSON.parse(canonical), pinataMetadata: { name: `friar-receipt-${canonicalHash.slice(0,16)}` } };
- const res = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${pinataJwt}`}, body: JSON.stringify(body) });
- const text = await res.text();
- if(!res.ok) return { ok:false, status:'upload_failed', provider:'pinata', canonical_hash:canonicalHash, error:text };
- let parsed; try{ parsed = JSON.parse(text); } catch { return { ok:false, status:'invalid_provider_response', provider:'pinata', canonical_hash:canonicalHash, error:text }; }
- return { ok:true, status:'pinned', provider:'pinata', canonical_json:canonical, canonical_hash:canonicalHash, cid:parsed.IpfsHash, pin_size:parsed.PinSize ?? null, timestamp:parsed.Timestamp ?? null };
-}
-async function realIpfsPinWeb3Storage(receipt, token){
- const canonical = canonicalize(receipt);
- const canonicalHash = await sha256Hex(canonical);
- const res = await fetch('https://api.web3.storage/upload', { method:'POST', headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}, body: canonical });
- const text = await res.text();
- if(!res.ok) return { ok:false, status:'upload_failed', provider:'web3.storage', canonical_hash:canonicalHash, error:text };
- let parsed; try{ parsed = JSON.parse(text); } catch { return { ok:false, status:'invalid_provider_response', provider:'web3.storage', canonical_hash:canonicalHash, error:text }; }
- return { ok:true, status:'uploaded', provider:'web3.storage', canonical_json:canonical, canonical_hash:canonicalHash, cid:parsed.cid || parsed.value?.cid || null };
-}
+const publicClient = createPublicClient({ chain: base, transport: http('https://mainnet.base.org') });
+const TEXT_ABI=[{type:'function',name:'setText',stateMutability:'nonpayable',inputs:[{name:'node',type:'bytes32'},{name:'key',type:'string'},{name:'value',type:'string'}],outputs:[]}];
+let walletClient=null, friarData=null, lastReceipt=null, currentReceiptReal=null, lastAnchorPayload=null, lastBaseReceipt=null, connectedAddress=null, baseState='pre-anchor', ensState='pre-ens';
+const ENS_NAME='jaywisdom.base.eth';
 
-async function runFriarReceipt(){
- const claim=document.getElementById('claim').value.trim(); const source=document.getElementById('source').value.trim();
- if(!claim){document.getElementById('receiptOutput').textContent='Paste a claim first.'; return;}
- const compressed=compressClaim(claim); const claimHash=await sha256Hex(cleanText(claim)); const compressedHash=await sha256Hex(compressed); const now=new Date().toISOString();
- const questions=friarData.loop.map(x=>x.step+': '+x.question).join('\n');
- lastReceipt={protocol:friarData.namespace,version:friarData.version,mode:'friar_receipts',created_at:now,anchor:friarData.anchor,input_claim:cleanText(claim),input_claim_hash:claimHash,compressed_claim:compressed,compressed_claim_hash:compressedHash,source:source||'unspecified',ooda_formula:friarData.compressed_formula.ooda_razor,machine_translation:friarData.compressed_formula.machine_translation,friar_spell:friarData.spell,human_line:friarData.human_line,status:'anchor-ready'};
- currentReceiptReal = null;
- document.getElementById('compressedClaim').textContent=compressed; document.getElementById('friarQuestions').textContent=questions; document.getElementById('receiptOutput').textContent=JSON.stringify(lastReceipt,null,2);
- document.getElementById('realIpfsResult').classList.add('hidden');
- setPipelineStatus(['receipt ready']);
-}
-function setPipelineStatus(items){document.getElementById('pipelineStatus').innerHTML=items.map(x=>'<span class="pill">'+x+'</span>').join('');}
+window.runLoop = async function(){ const res=await fetch('filecoin-purpose.json'); const data=await res.json(); let log=''; data.game_loop.forEach((step,i)=> log += (i+1)+'. '+step+'\n'); log += '\nScore Model:\n'; Object.entries(data.points).forEach(([k,v])=> log += k+': '+v+' pts\n'); document.getElementById('output').textContent=log; };
+function cleanText(text){ return text.replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").trim(); }
+function compressClaim(text){ const cleaned=cleanText(text); const sentences=cleaned.split(/(?<=[.!?])\s+/).filter(Boolean); let best=sentences.sort((a,b)=>a.length-b.length)[0]||cleaned; if(best.length>220) best=best.slice(0,220).trim()+'…'; return best; }
+async function sha256Hex(text){ const bytes=new TextEncoder().encode(text); const digest=await crypto.subtle.digest('SHA-256',bytes); return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function canonicalize(value){ if(value===null||typeof value!=='object') return JSON.stringify(value); if(Array.isArray(value)) return '['+value.map(canonicalize).join(',')+']'; const keys=Object.keys(value).sort(); return '{'+keys.map(k=>JSON.stringify(k)+':'+canonicalize(value[k])).join(',')+'}'; }
+function fakeCidFromHash(hash){ return 'bafyfriar'+hash.slice(0,24); }
+function fakeDealIdFromHash(hash){ return 'deal_'+hash.slice(0,12); }
+function fakeTxCalldata(rootHash,cid){ return { to:'0x0000000000000000000000000000000000000000', data:'0x'+rootHash.slice(0,64)+cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128) }; }
+function setPipelineStatus(items){ document.getElementById('pipelineStatus').innerHTML=items.map(x=>'<span class="pill">'+x+'</span>').join(''); }
+function updateBaseState(){ document.getElementById('baseState').textContent=baseState; const map={ 'pre-anchor':['warn','not anchored'], 'submitted':['warn','pending confirmation'], 'confirmed':['ok','anchored on Base'], 'failed':['bad','failed'] }; const [cls,text]=map[baseState]||['warn',baseState]; const el=document.getElementById('baseStateHuman'); el.className=cls; el.textContent=text; }
+function updateEnsState(){ document.getElementById('ensState').textContent=ensState; const map={ 'pre-ens':['warn','waiting for confirmed tx + real cid'], 'ens-writing':['warn','resolver write pending'], 'ens-confirmed':['ok','records written'], 'verified':['ok','resolver replay matches'], 'mismatch':['bad','resolver mismatch'], 'ens-failed':['bad','resolver write failed'] }; const [cls,text]=map[ensState]||['warn',ensState]; const el=document.getElementById('ensStateHuman'); el.className=cls; el.textContent=text; }
+function refreshButtons(){ document.getElementById('baseSendButton').disabled = !(lastAnchorPayload && walletClient); document.getElementById('ensAnchorButton').disabled = !(baseState==='confirmed' && currentReceiptReal?.cid && walletClient); document.getElementById('ensVerifyButton').disabled = !(ensState==='ens-confirmed' || ensState==='verified' || ensState==='mismatch'); }
 
-async function buildAnchorPipeline(){
- if(!lastReceipt){document.getElementById('storageOutput').textContent='Generate friar receipt first.'; document.getElementById('anchorOutput').textContent='No receipt loaded.'; setPipelineStatus(['waiting for receipt']); return;}
- const canonical=canonicalize(lastReceipt);
- const receiptHash=await sha256Hex(canonical);
- const simulatedCid=fakeCidFromHash(receiptHash);
- const simulatedDealId=fakeDealIdFromHash(receiptHash);
- const merkleRoot=await sha256Hex(lastReceipt.compressed_claim_hash + receiptHash);
- const storageLayer={mode:'simulated',receipt_hash:receiptHash,ipfs:{cid:simulatedCid,status:'derived-locally'},filecoin:{deal_id:simulatedDealId,status:'simulated-durability-layer'},merkle_root:merkleRoot};
- const anchorPayload={network:'Base',anchor_mode:'prepared_not_sent',ens:lastReceipt.anchor,receipt_hash:receiptHash,cid:simulatedCid,merkle_root:merkleRoot,tx_payload:fakeTxCalldata(merkleRoot,simulatedCid),next_steps:['Pin receipt JSON to IPFS','Confirm Filecoin-backed storage','Write CID/root into ENS text record or receipt contract','Broadcast Base transaction from wallet']};
- document.getElementById('storageOutput').textContent=JSON.stringify(storageLayer,null,2);
- document.getElementById('anchorOutput').textContent=JSON.stringify(anchorPayload,null,2);
- setPipelineStatus(['receipt ready','cid simulated','filecoin simulated','base payload prepared']);
-}
+async function realIpfsPinPinata(receipt, pinataJwt){ const canonical=canonicalize(receipt); const canonicalHash=await sha256Hex(canonical); const body={ pinataContent: JSON.parse(canonical), pinataMetadata:{ name:`friar-receipt-${canonicalHash.slice(0,16)}` } }; const res=await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${pinataJwt}`}, body:JSON.stringify(body) }); const text=await res.text(); if(!res.ok) return {ok:false,status:'upload_failed',provider:'pinata',canonical_hash:canonicalHash,error:text}; let parsed; try{ parsed=JSON.parse(text);} catch { return {ok:false,status:'invalid_provider_response',provider:'pinata',canonical_hash:canonicalHash,error:text}; } return {ok:true,status:'pinned',provider:'pinata',canonical_json:canonical,canonical_hash:canonicalHash,cid:parsed.IpfsHash,pin_size:parsed.PinSize??null,timestamp:parsed.Timestamp??null}; }
+async function realIpfsPinWeb3Storage(receipt, token){ const canonical=canonicalize(receipt); const canonicalHash=await sha256Hex(canonical); const res=await fetch('https://api.web3.storage/upload',{ method:'POST', headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}, body:canonical }); const text=await res.text(); if(!res.ok) return {ok:false,status:'upload_failed',provider:'web3.storage',canonical_hash:canonicalHash,error:text}; let parsed; try{ parsed=JSON.parse(text);} catch { return {ok:false,status:'invalid_provider_response',provider:'web3.storage',canonical_hash:canonicalHash,error:text}; } return {ok:true,status:'uploaded',provider:'web3.storage',canonical_json:canonical,canonical_hash:canonicalHash,cid:parsed.cid||parsed.value?.cid||null}; }
 
-async function realIpfsPin(){
- if(!lastReceipt){ alert('Generate a receipt first'); return; }
- const provider = document.querySelector('input[name="ipfs_provider"]:checked')?.value || 'pinata';
- const token = prompt(`Enter your ${provider === 'pinata' ? 'PINATA JWT' : 'WEB3.STORAGE TOKEN'}:`);
- if(!token) return;
- setPipelineStatus(['receipt ready','uploading canonical bytes']);
- const result = provider === 'pinata' ? await realIpfsPinPinata(lastReceipt, token) : await realIpfsPinWeb3Storage(lastReceipt, token);
- if(result.ok){
-   currentReceiptReal = result;
-   document.getElementById('real_cid_display').textContent = result.cid || '(provider returned no cid)';
-   document.getElementById('real_canonical_hash').textContent = result.canonical_hash;
-   document.getElementById('real_ipfs_result').textContent = JSON.stringify(result, null, 2);
-   document.getElementById('realIpfsResult').classList.remove('hidden');
-   setPipelineStatus(['receipt ready','real cid returned','ipfs pinned']);
-   alert(`✅ Pinned\nCID: ${result.cid}`);
- } else {
-   document.getElementById('real_cid_display').textContent = '';
-   document.getElementById('real_canonical_hash').textContent = result.canonical_hash || '';
-   document.getElementById('real_ipfs_result').textContent = JSON.stringify(result, null, 2);
-   document.getElementById('realIpfsResult').classList.remove('hidden');
-   setPipelineStatus(['receipt ready','real pin failed']);
-   alert(`❌ Failed: ${result.error}`);
- }
-}
+window.runFriarReceipt = async function(){ const claim=document.getElementById('claim').value.trim(); const source=document.getElementById('source').value.trim(); if(!claim){ document.getElementById('receiptOutput').textContent='Paste a claim first.'; return; } const compressed=compressClaim(claim); const claimHash=await sha256Hex(cleanText(claim)); const compressedHash=await sha256Hex(compressed); const now=new Date().toISOString(); const questions=friarData.loop.map(x=>x.step+': '+x.question).join('\n'); lastReceipt={protocol:friarData.namespace,version:friarData.version,mode:'friar_receipts',created_at:now,anchor:friarData.anchor,input_claim:cleanText(claim),input_claim_hash:claimHash,compressed_claim:compressed,compressed_claim_hash:compressedHash,source:source||'unspecified',ooda_formula:friarData.compressed_formula.ooda_razor,machine_translation:friarData.compressed_formula.machine_translation,friar_spell:friarData.spell,human_line:friarData.human_line,status:'anchor-ready'}; currentReceiptReal=null; lastAnchorPayload=null; lastBaseReceipt=null; baseState='pre-anchor'; ensState='pre-ens'; document.getElementById('compressedClaim').textContent=compressed; document.getElementById('friarQuestions').textContent=questions; document.getElementById('receiptOutput').textContent=JSON.stringify(lastReceipt,null,2); document.getElementById('realIpfsResult').classList.add('hidden'); document.getElementById('storageOutput').textContent=''; document.getElementById('anchorOutput').textContent=''; document.getElementById('txHash').textContent=''; document.getElementById('explorerLink').textContent=''; document.getElementById('baseReceiptOutput').textContent=''; document.getElementById('ensWriteOutput').textContent=''; document.getElementById('ensVerifyOutput').textContent=''; document.getElementById('ensVerifyHuman').textContent=''; setPipelineStatus(['receipt ready']); updateBaseState(); updateEnsState(); refreshButtons(); };
 
-async function renderFriar(){
- const res=await fetch('friar-ooda.json'); friarData=await res.json();
- document.getElementById('friar-thesis').textContent=friarData.thesis; document.getElementById('formula').textContent=friarData.compressed_formula.ooda_razor; document.getElementById('machine-line').textContent=friarData.compressed_formula.machine_translation; document.getElementById('spell').textContent=friarData.spell; document.getElementById('human-line').textContent=friarData.human_line;
- const glyphs=document.getElementById('glyphs'); glyphs.innerHTML=''; Object.entries(friarData.glyphs).forEach(([g,label])=>{const el=document.createElement('div'); el.className='glyph'; el.textContent=g+' '+label; glyphs.appendChild(el);});
- const loop=document.getElementById('friar-loop'); loop.innerHTML=''; friarData.loop.forEach(item=>{const card=document.createElement('div'); card.className='step'; card.innerHTML='<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>'; loop.appendChild(card);});
- document.getElementById('friar-protocol').textContent='Vows:\n- '+friarData.friar_protocol.vows.join('\n- ')+'\n\nAnti-patterns:\n- '+friarData.friar_protocol.anti_patterns.join('\n- ');
- setPipelineStatus(['waiting for receipt']);
-}
+window.buildAnchorPipeline = async function(){ if(!lastReceipt){ document.getElementById('storageOutput').textContent='Generate friar receipt first.'; document.getElementById('anchorOutput').textContent='No receipt loaded.'; setPipelineStatus(['waiting for receipt']); return; } const canonical=canonicalize(lastReceipt); const receiptHash=await sha256Hex(canonical); const simulatedCid=fakeCidFromHash(receiptHash); const simulatedDealId=fakeDealIdFromHash(receiptHash); const merkleRoot=await sha256Hex(lastReceipt.compressed_claim_hash + receiptHash); const storageLayer={mode:'simulated',receipt_hash:receiptHash,ipfs:{cid:simulatedCid,status:'derived-locally'},filecoin:{deal_id:simulatedDealId,status:'simulated-durability-layer'},merkle_root:merkleRoot}; lastAnchorPayload={network:'Base',anchor_mode:'prepared_not_sent',ens:lastReceipt.anchor,receipt_hash:receiptHash,cid:simulatedCid,merkle_root:merkleRoot,tx_payload:fakeTxCalldata(merkleRoot,simulatedCid),next_steps:['Pin receipt JSON to IPFS','Confirm Filecoin-backed storage','Write CID/root into ENS text record or receipt contract','Broadcast Base transaction from wallet']}; document.getElementById('storageOutput').textContent=JSON.stringify(storageLayer,null,2); document.getElementById('anchorOutput').textContent=JSON.stringify(lastAnchorPayload,null,2); setPipelineStatus(['receipt ready','cid simulated','filecoin simulated','base payload prepared']); refreshButtons(); };
+
+window.realIpfsPin = async function(){ if(!lastReceipt){ alert('Generate a receipt first'); return; } const provider=document.querySelector('input[name="ipfs_provider"]:checked')?.value||'pinata'; const token=prompt(`Enter your ${provider==='pinata'?'PINATA JWT':'WEB3.STORAGE TOKEN'}:`); if(!token) return; setPipelineStatus(['receipt ready','uploading canonical bytes']); const result=provider==='pinata' ? await realIpfsPinPinata(lastReceipt, token) : await realIpfsPinWeb3Storage(lastReceipt, token); document.getElementById('realIpfsResult').classList.remove('hidden'); document.getElementById('real_ipfs_result').textContent=JSON.stringify(result,null,2); if(result.ok){ currentReceiptReal=result; document.getElementById('real_cid_display').textContent=result.cid||'(provider returned no cid)'; document.getElementById('real_canonical_hash').textContent=result.canonical_hash; setPipelineStatus(['receipt ready','real cid returned','ipfs pinned']); } else { document.getElementById('real_cid_display').textContent=''; document.getElementById('real_canonical_hash').textContent=result.canonical_hash||''; setPipelineStatus(['receipt ready','real pin failed']); alert(`❌ Failed: ${result.error}`); } refreshButtons(); };
+
+window.connectWallet = async function(){ if(!window.ethereum){ alert('No wallet found'); return; } walletClient=createWalletClient({ chain: base, transport: custom(window.ethereum) }); const [address]=await walletClient.requestAddresses(); connectedAddress=address; document.getElementById('walletStatus').textContent=address; refreshButtons(); };
+async function buildBaseTx(anchorPayload){ if(!connectedAddress) throw new Error('Connect wallet first'); const cid=currentReceiptReal?.cid || anchorPayload.cid; const data='0x'+anchorPayload.merkle_root + cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128); return { account: connectedAddress, to: connectedAddress, value: 0n, data }; }
+window.sendBaseTx = async function(){ if(!walletClient){ alert('Connect wallet first'); return; } if(!lastAnchorPayload){ alert('Build anchor pipeline first'); return; } const tx=await buildBaseTx(lastAnchorPayload); baseState='submitted'; updateBaseState(); refreshButtons(); try{ const hash=await walletClient.sendTransaction(tx); document.getElementById('txHash').textContent=hash; document.getElementById('explorerLink').href=`https://basescan.org/tx/${hash}`; document.getElementById('explorerLink').textContent='View on BaseScan'; const receipt=await publicClient.waitForTransactionReceipt({ hash }); lastBaseReceipt={ hash, receipt }; if(receipt.status==='success'){ baseState='confirmed'; document.getElementById('baseReceiptOutput').textContent=JSON.stringify(receipt,null,2); } else { baseState='failed'; } } catch(err){ baseState='failed'; document.getElementById('baseReceiptOutput').textContent=String(err); alert('Tx failed: '+err.message); } updateBaseState(); refreshButtons(); };
+
+async function getEnsResolver(name){ const resolver=await publicClient.getEnsResolver({ name: normalize(name) }); if(!resolver) throw new Error(`No resolver found for ${name}`); return resolver; }
+window.ensAnchor = async function(){ if(!(baseState==='confirmed' && currentReceiptReal?.cid && walletClient && lastAnchorPayload && lastBaseReceipt)){ alert('Need confirmed Base tx and real CID first'); return; } ensState='ens-writing'; updateEnsState(); refreshButtons(); try{ const resolver=await getEnsResolver(ENS_NAME); const block=await publicClient.getBlock({ blockHash: lastBaseReceipt.receipt.blockHash }); const timestamp=new Date(Number(block.timestamp)*1000).toISOString(); const node=namehash(normalize(ENS_NAME)); const writes=[['friar/cid',currentReceiptReal.cid],['friar/merkle_root',lastAnchorPayload.merkle_root],['friar/tx_hash',lastBaseReceipt.hash],['friar/timestamp',timestamp]]; const out={ resolver, writes:[] }; for(const [key,value] of writes){ const { request }=await publicClient.simulateContract({ account: connectedAddress, address: resolver, abi: TEXT_ABI, functionName:'setText', args:[node,key,value] }); const hash=await walletClient.writeContract(request); const receipt=await publicClient.waitForTransactionReceipt({ hash }); if(receipt.status!=='success') throw new Error('ENS write failed: '+key); out.writes.push({ key, value, hash, receipt }); } document.getElementById('ensWriteOutput').textContent=JSON.stringify(out,null,2); ensState='ens-confirmed'; } catch(err){ ensState='ens-failed'; document.getElementById('ensWriteOutput').textContent=String(err); alert('ENS write failed: '+err.message); } updateEnsState(); refreshButtons(); };
+window.verifyEns = async function(){ try{ const keys=['friar/cid','friar/merkle_root','friar/tx_hash','friar/timestamp']; const values={}; for(const key of keys){ values[key]=await publicClient.getEnsText({ name: normalize(ENS_NAME), key }); } document.getElementById('ensVerifyOutput').textContent=JSON.stringify(values,null,2); const block= lastBaseReceipt ? await publicClient.getBlock({ blockHash:lastBaseReceipt.receipt.blockHash }) : null; const expectedTs= block ? new Date(Number(block.timestamp)*1000).toISOString() : null; const ok= values['friar/cid']===currentReceiptReal?.cid && values['friar/merkle_root']===lastAnchorPayload?.merkle_root && values['friar/tx_hash']===lastBaseReceipt?.hash && (!expectedTs || values['friar/timestamp']===expectedTs); ensState = ok ? 'verified' : 'mismatch'; const human=document.getElementById('ensVerifyHuman'); human.className = ok ? 'ok' : 'bad'; human.textContent = ok ? '✅ VERIFIED — resolver replay matches expected values' : '❌ MISMATCH — resolver values differ from expected pipeline outputs'; } catch(err){ ensState='mismatch'; document.getElementById('ensVerifyOutput').textContent=String(err); const human=document.getElementById('ensVerifyHuman'); human.className='bad'; human.textContent='❌ Verification failed'; } updateEnsState(); refreshButtons(); };
+
+async function renderFriar(){ const res=await fetch('friar-ooda.json'); friarData=await res.json(); document.getElementById('friar-thesis').textContent=friarData.thesis; document.getElementById('formula').textContent=friarData.compressed_formula.ooda_razor; document.getElementById('machine-line').textContent=friarData.compressed_formula.machine_translation; document.getElementById('spell').textContent=friarData.spell; document.getElementById('human-line').textContent=friarData.human_line; const glyphs=document.getElementById('glyphs'); glyphs.innerHTML=''; Object.entries(friarData.glyphs).forEach(([g,label])=>{ const el=document.createElement('div'); el.className='glyph'; el.textContent=g+' '+label; glyphs.appendChild(el); }); const loop=document.getElementById('friar-loop'); loop.innerHTML=''; friarData.loop.forEach(item=>{ const card=document.createElement('div'); card.className='step'; card.innerHTML='<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>'; loop.appendChild(card); }); document.getElementById('friar-protocol').textContent='Vows:\n- '+friarData.friar_protocol.vows.join('\n- ')+'\n\nAnti-patterns:\n- '+friarData.friar_protocol.anti_patterns.join('\n- '); setPipelineStatus(['waiting for receipt']); updateBaseState(); updateEnsState(); refreshButtons(); }
 renderFriar();
 </script>
-</div>
 </body>
 </html>
