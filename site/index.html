@@ -17,7 +17,7 @@ button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent)
 textarea,input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(96,165,250,.28);background:#08101f;color:white}
 pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2);overflow:auto}.glyphs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .glyph{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700}.quote{font-size:1.3rem;font-weight:700;color:#eff6ff}.small{font-size:.92rem;color:#93c5fd}
-.pill{display:inline-block;padding:8px 10px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);margin:4px 6px 0 0;color:#dbeafe}.ok{color:#86efac}.warn{color:#fcd34d}
+.pill{display:inline-block;padding:8px 10px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);margin:4px 6px 0 0;color:#dbeafe}.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.hidden{display:none}
 @media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}}@media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -79,7 +79,7 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
 
   <div class="card">
     <h2>⛓️ Anchor Pipeline</h2>
-    <p>Simulated CID + Filecoin durability + Base anchor payload builder. No fake upload claims. This page computes deterministic values locally and prepares the exact objects you would anchor next.</p>
+    <p>Prepared payload mode and real IPFS pin mode now live side by side. One prepares exact deterministic objects locally. The other only claims success when a provider returns a real CID.</p>
     <div class="grid">
       <div class="card" style="margin-top:0">
         <h3>Pipeline Status</h3>
@@ -87,19 +87,33 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
       </div>
       <div class="card" style="margin-top:0">
         <h3>Actions</h3>
-        <button onclick="buildAnchorPipeline()">BUILD ANCHOR PIPELINE</button>
+        <div class="row">
+          <button onclick="buildAnchorPipeline()">BUILD ANCHOR PIPELINE</button>
+          <button onclick="realIpfsPin()">🌐 REAL IPFS PIN</button>
+        </div>
         <p class="small">Requires a generated friar receipt first.</p>
+        <div class="row small">
+          <label><input type="radio" name="ipfs_provider" value="pinata" checked> Pinata</label>
+          <label><input type="radio" name="ipfs_provider" value="web3"> Web3.Storage</label>
+        </div>
       </div>
     </div>
     <div class="grid" style="margin-top:18px">
       <div class="card" style="margin-top:0"><h3>Simulated Storage Layer</h3><pre id="storageOutput"></pre></div>
       <div class="card" style="margin-top:0"><h3>Base Anchor Payload</h3><pre id="anchorOutput"></pre></div>
     </div>
+    <div class="card hidden" id="realIpfsResult" style="margin-top:18px">
+      <h3>Real IPFS Pin Result</h3>
+      <p><strong>Real CID:</strong> <span class="mono" id="real_cid_display"></span></p>
+      <p><strong>Canonical Hash:</strong> <span class="mono" id="real_canonical_hash"></span></p>
+      <pre id="real_ipfs_result"></pre>
+    </div>
   </div>
 
 <script>
 let friarData = null;
 let lastReceipt = null;
+let currentReceiptReal = null;
 
 async function runLoop(){
  const res = await fetch('filecoin-purpose.json');
@@ -111,9 +125,30 @@ async function runLoop(){
 function cleanText(text){return text.replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").trim();}
 function compressClaim(text){const cleaned=cleanText(text); const sentences=cleaned.split(/(?<=[.!?])\s+/).filter(Boolean); let best=sentences.sort((a,b)=>a.length-b.length)[0]||cleaned; if(best.length>220) best=best.slice(0,220).trim()+'…'; return best;}
 async function sha256Hex(text){const bytes=new TextEncoder().encode(text); const digest=await crypto.subtle.digest('SHA-256',bytes); return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+function canonicalize(value){if(value===null||typeof value!=='object') return JSON.stringify(value); if(Array.isArray(value)) return '['+value.map(canonicalize).join(',')+']'; const keys=Object.keys(value).sort(); return '{'+keys.map(k=>JSON.stringify(k)+':'+canonicalize(value[k])).join(',')+'}';}
 function fakeCidFromHash(hash){return 'bafyfriar'+hash.slice(0,24);} 
 function fakeDealIdFromHash(hash){return 'deal_'+hash.slice(0,12);} 
 function fakeTxCalldata(rootHash,cid){return {to:'0x0000000000000000000000000000000000000000',data:'0x'+rootHash.slice(0,64)+cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128)};}
+
+async function realIpfsPinPinata(receipt, pinataJwt){
+ const canonical = canonicalize(receipt);
+ const canonicalHash = await sha256Hex(canonical);
+ const body = { pinataContent: JSON.parse(canonical), pinataMetadata: { name: `friar-receipt-${canonicalHash.slice(0,16)}` } };
+ const res = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${pinataJwt}`}, body: JSON.stringify(body) });
+ const text = await res.text();
+ if(!res.ok) return { ok:false, status:'upload_failed', provider:'pinata', canonical_hash:canonicalHash, error:text };
+ let parsed; try{ parsed = JSON.parse(text); } catch { return { ok:false, status:'invalid_provider_response', provider:'pinata', canonical_hash:canonicalHash, error:text }; }
+ return { ok:true, status:'pinned', provider:'pinata', canonical_json:canonical, canonical_hash:canonicalHash, cid:parsed.IpfsHash, pin_size:parsed.PinSize ?? null, timestamp:parsed.Timestamp ?? null };
+}
+async function realIpfsPinWeb3Storage(receipt, token){
+ const canonical = canonicalize(receipt);
+ const canonicalHash = await sha256Hex(canonical);
+ const res = await fetch('https://api.web3.storage/upload', { method:'POST', headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}, body: canonical });
+ const text = await res.text();
+ if(!res.ok) return { ok:false, status:'upload_failed', provider:'web3.storage', canonical_hash:canonicalHash, error:text };
+ let parsed; try{ parsed = JSON.parse(text); } catch { return { ok:false, status:'invalid_provider_response', provider:'web3.storage', canonical_hash:canonicalHash, error:text }; }
+ return { ok:true, status:'uploaded', provider:'web3.storage', canonical_json:canonical, canonical_hash:canonicalHash, cid:parsed.cid || parsed.value?.cid || null };
+}
 
 async function runFriarReceipt(){
  const claim=document.getElementById('claim').value.trim(); const source=document.getElementById('source').value.trim();
@@ -121,14 +156,16 @@ async function runFriarReceipt(){
  const compressed=compressClaim(claim); const claimHash=await sha256Hex(cleanText(claim)); const compressedHash=await sha256Hex(compressed); const now=new Date().toISOString();
  const questions=friarData.loop.map(x=>x.step+': '+x.question).join('\n');
  lastReceipt={protocol:friarData.namespace,version:friarData.version,mode:'friar_receipts',created_at:now,anchor:friarData.anchor,input_claim:cleanText(claim),input_claim_hash:claimHash,compressed_claim:compressed,compressed_claim_hash:compressedHash,source:source||'unspecified',ooda_formula:friarData.compressed_formula.ooda_razor,machine_translation:friarData.compressed_formula.machine_translation,friar_spell:friarData.spell,human_line:friarData.human_line,status:'anchor-ready'};
+ currentReceiptReal = null;
  document.getElementById('compressedClaim').textContent=compressed; document.getElementById('friarQuestions').textContent=questions; document.getElementById('receiptOutput').textContent=JSON.stringify(lastReceipt,null,2);
+ document.getElementById('realIpfsResult').classList.add('hidden');
  setPipelineStatus(['receipt ready']);
 }
 function setPipelineStatus(items){document.getElementById('pipelineStatus').innerHTML=items.map(x=>'<span class="pill">'+x+'</span>').join('');}
 
 async function buildAnchorPipeline(){
  if(!lastReceipt){document.getElementById('storageOutput').textContent='Generate friar receipt first.'; document.getElementById('anchorOutput').textContent='No receipt loaded.'; setPipelineStatus(['waiting for receipt']); return;}
- const canonical=JSON.stringify(lastReceipt);
+ const canonical=canonicalize(lastReceipt);
  const receiptHash=await sha256Hex(canonical);
  const simulatedCid=fakeCidFromHash(receiptHash);
  const simulatedDealId=fakeDealIdFromHash(receiptHash);
@@ -138,6 +175,31 @@ async function buildAnchorPipeline(){
  document.getElementById('storageOutput').textContent=JSON.stringify(storageLayer,null,2);
  document.getElementById('anchorOutput').textContent=JSON.stringify(anchorPayload,null,2);
  setPipelineStatus(['receipt ready','cid simulated','filecoin simulated','base payload prepared']);
+}
+
+async function realIpfsPin(){
+ if(!lastReceipt){ alert('Generate a receipt first'); return; }
+ const provider = document.querySelector('input[name="ipfs_provider"]:checked')?.value || 'pinata';
+ const token = prompt(`Enter your ${provider === 'pinata' ? 'PINATA JWT' : 'WEB3.STORAGE TOKEN'}:`);
+ if(!token) return;
+ setPipelineStatus(['receipt ready','uploading canonical bytes']);
+ const result = provider === 'pinata' ? await realIpfsPinPinata(lastReceipt, token) : await realIpfsPinWeb3Storage(lastReceipt, token);
+ if(result.ok){
+   currentReceiptReal = result;
+   document.getElementById('real_cid_display').textContent = result.cid || '(provider returned no cid)';
+   document.getElementById('real_canonical_hash').textContent = result.canonical_hash;
+   document.getElementById('real_ipfs_result').textContent = JSON.stringify(result, null, 2);
+   document.getElementById('realIpfsResult').classList.remove('hidden');
+   setPipelineStatus(['receipt ready','real cid returned','ipfs pinned']);
+   alert(`✅ Pinned\nCID: ${result.cid}`);
+ } else {
+   document.getElementById('real_cid_display').textContent = '';
+   document.getElementById('real_canonical_hash').textContent = result.canonical_hash || '';
+   document.getElementById('real_ipfs_result').textContent = JSON.stringify(result, null, 2);
+   document.getElementById('realIpfsResult').classList.remove('hidden');
+   setPipelineStatus(['receipt ready','real pin failed']);
+   alert(`❌ Failed: ${result.error}`);
+ }
 }
 
 async function renderFriar(){
