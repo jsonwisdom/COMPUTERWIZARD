@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>COMPUTERWIZARD — Attention on Base</title>
+  <meta name="description" content="Attention on Base — receipts over headlines, data over narrative, policy tracked through an OODA loop.">
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: #0b1020;
+      --line: #1d4ed8;
+      --line-soft: rgba(59,130,246,0.28);
+      --text: #f8fafc;
+      --muted: #a5b4fc;
+      --accent: #2563eb;
+      --accent-2: #60a5fa;
+      --success: #93c5fd;
+      --shadow: 0 0 0 1px rgba(96,165,250,0.22), 0 12px 40px rgba(37,99,235,0.18);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, #0b1636 0%, var(--bg) 45%, #02040a 100%); color: var(--text); font-family: Inter, Arial, Helvetica, sans-serif; }
+    a { color: inherit; }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 14px 18px; border: 1px solid var(--line-soft); background: rgba(10,15,30,0.78);
+      border-radius: 18px; box-shadow: var(--shadow); backdrop-filter: blur(10px);
+      position: sticky; top: 16px; z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: 0.08em; }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 999px; background: #fff; position: relative;
+      box-shadow: 0 0 24px rgba(96,165,250,0.25);
+    }
+    .brand-mark::after {
+      content: ""; position: absolute; left: 8px; right: 8px; top: 16px; height: 4px; background: var(--accent); border-radius: 999px;
+    }
+    .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 14px; }
+    .hero {
+      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; align-items: center; min-height: 78vh; padding: 28px 0 18px;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px;
+      border: 1px solid var(--line-soft); background: rgba(37,99,235,0.12); color: var(--success); font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+    }
+    h1 {
+      font-size: clamp(3rem, 7vw, 6.5rem); line-height: 0.92; margin: 18px 0 14px; text-transform: uppercase; letter-spacing: -0.04em;
+    }
+    .base-blue { color: #3b82f6; text-shadow: 0 0 24px rgba(59,130,246,0.35); }
+    .lede { font-size: clamp(1.1rem, 2vw, 1.4rem); line-height: 1.5; color: #dbeafe; max-width: 700px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 28px 0 24px; }
+    .btn {
+      text-decoration: none; padding: 14px 18px; border-radius: 14px; font-weight: 800; letter-spacing: 0.02em; border: 1px solid var(--line-soft);
+      box-shadow: var(--shadow);
+    }
+    .btn.primary { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); }
+    .btn.secondary { background: rgba(10,15,30,0.78); color: var(--muted); }
+    .signal-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin-top: 10px; }
+    .signal {
+      background: rgba(8,12,24,0.9); border: 1px solid var(--line-soft); border-radius: 18px; padding: 16px; box-shadow: var(--shadow);
+    }
+    .signal h3 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+    .signal p { margin: 0; font-size: 1rem; font-weight: 800; }
+    .poster-card {
+      position: relative; background: rgba(8,12,24,0.86); border: 1px solid var(--line-soft); border-radius: 24px; padding: 14px; box-shadow: var(--shadow);
+    }
+    .poster-card img { width: 100%; display: block; border-radius: 18px; }
+    .section { padding: 26px 0; }
+    .section h2 { font-size: clamp(1.8rem, 3.4vw, 3rem); margin: 0 0 10px; text-transform: uppercase; }
+    .section p.section-copy { color: #cbd5e1; max-width: 880px; line-height: 1.7; }
+    .ooda {
+      display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-top: 18px;
+    }
+    .step {
+      background: linear-gradient(180deg, rgba(12,18,35,0.96) 0%, rgba(8,12,24,0.96) 100%);
+      border: 1px solid var(--line-soft); border-radius: 22px; padding: 18px; box-shadow: var(--shadow);
+    }
+    .step .kicker { color: var(--accent-2); font-size: 12px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; }
+    .step h3 { margin: 8px 0 8px; font-size: 1.4rem; }
+    .step p { margin: 0; color: #dbeafe; line-height: 1.6; }
+    .principles {
+      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; margin-top: 20px;
+    }
+    .panel {
+      background: rgba(8,12,24,0.9); border: 1px solid var(--line-soft); border-radius: 22px; padding: 20px; box-shadow: var(--shadow);
+    }
+    .list { margin: 0; padding-left: 20px; color: #e2e8f0; line-height: 1.8; }
+    .quote {
+      font-size: clamp(1.3rem, 2.2vw, 2rem); line-height: 1.45; font-weight: 800; color: #eff6ff;
+    }
+    .story {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px;
+    }
+    .story .big-link {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 68px; border-radius: 16px; font-weight: 900; text-decoration: none;
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border: 1px solid var(--line-soft);
+    }
+    footer {
+      padding: 32px 0 44px; color: #93c5fd; text-align: center; font-size: 14px;
+    }
+    .footer-line { border-top: 1px solid var(--line-soft); padding-top: 18px; }
+    @media (max-width: 1080px) {
+      .hero, .principles, .story { grid-template-columns: 1fr; }
+      .signal-grid, .ooda { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 680px) {
+      .wrap { padding: 16px; }
+      .nav { position: static; }
+      .signal-grid, .ooda { grid-template-columns: 1fr; }
+      h1 { font-size: 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>COMPUTERWIZARD</span>
+      </div>
+      <div class="nav-links">
+        <a href="#attention">Attention</a>
+        <a href="#ooda">OODA</a>
+        <a href="#principles">Principles</a>
+        <a href="#story">Story</a>
+      </div>
+    </nav>
+
+    <section class="hero" id="attention">
+      <div>
+        <span class="eyebrow">⚡ ATTENTION LAYER / BASE SIGNAL</span>
+        <h1>Attention<br>on <span class="base-blue">Base</span></h1>
+        <p class="lede">Policy evolves. Truth compounds. This landing page turns the poster into a live doctrine surface: receipts over headlines, data over narrative, proposal is not law, and the OODA loop stays in motion.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="#story">Read the Full Story</a>
+          <a class="btn secondary" href="https://www.axios.com/2026/04/22/trump-marijuana-rule-change" target="_blank" rel="noreferrer">Open Axios Source</a>
+        </div>
+        <div class="signal-grid">
+          <div class="signal"><h3>Signal 01</h3><p>Data &gt; Narrative</p></div>
+          <div class="signal"><h3>Signal 02</h3><p>Receipts &gt; Headlines</p></div>
+          <div class="signal"><h3>Signal 03</h3><p>Proposal ≠ Law</p></div>
+          <div class="signal"><h3>Signal 04</h3><p>Build on Base</p></div>
+        </div>
+      </div>
+      <div class="poster-card">
+        <img src="../assets/attention-on-base-2026-04-22.jpeg" alt="Attention on Base poster showing OODA loop, proposal not law, receipts over headlines, and read the full story callout.">
+      </div>
+    </section>
+
+    <section class="section" id="ooda">
+      <h2>OODA Loop</h2>
+      <p class="section-copy">The poster already had the machine inside it. This page makes the machine readable: Observe the shift, orient around evidence, decide on data instead of vibes, then act with receipts and enforcement pressure.</p>
+      <div class="ooda">
+        <article class="step">
+          <div class="kicker">Step 01</div>
+          <h3>Observe</h3>
+          <p>Schedule I → Schedule III is a signal, not settlement. Watch the language, timing, and institutional motion without overclaiming the result.</p>
+        </article>
+        <article class="step">
+          <div class="kicker">Step 02</div>
+          <h3>Orient</h3>
+          <p>Less stigma, more research, more data. The frame moves from taboo and fear toward evidence, medical review, and measurable outcomes.</p>
+        </article>
+        <article class="step">
+          <div class="kicker">Step 03</div>
+          <h3>Decide</h3>
+          <p>Proposal ≠ law. Distinguish headline momentum from actual legal effect. Reality arrives through published rules, process, and enforcement change.</p>
+        </article>
+        <article class="step">
+          <div class="kicker">Step 04</div>
+          <h3>Act</h3>
+          <p>Track the paper trail. Preserve sources. Invite the crew. Trade, earn, and repeat only after the receipts layer confirms the state transition.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="principles">
+      <h2>Principles</h2>
+      <p class="section-copy">This repo is no longer just a static statement. It now has a front door that expresses the system doctrine in plain language and in a form that can later attach to receipts, hashes, CIDs, and chain anchors.</p>
+      <div class="principles">
+        <div class="panel">
+          <ol class="list">
+            <li><strong>Attention is capital.</strong> Don’t waste it on false finality.</li>
+            <li><strong>Proposal is not law.</strong> Wait for the real rule surface.</li>
+            <li><strong>Headlines are not receipts.</strong> Preserve the primary source and replay it later.</li>
+            <li><strong>Data beats narrative.</strong> Reduce rhetoric. Keep the measurable state.</li>
+            <li><strong>Build in public.</strong> Let the visual layer point toward verification, not away from it.</li>
+          </ol>
+        </div>
+        <div class="panel">
+          <div class="quote">“Together, we build what matters.”</div>
+          <p class="section-copy">Open. Secure. Low cost. Builder first. Community owned. The page keeps the poster language but tightens it into a cleaner operational surface for future wiring.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="story">
+      <h2>Read the Full Story</h2>
+      <p class="section-copy">The poster referenced the Axios report about the marijuana scheduling proposal. This link stays explicit so the landing page remains grounded in a cited source instead of floating as pure aesthetic narrative.</p>
+      <div class="story">
+        <div class="panel">
+          <h3>Source Link</h3>
+          <p class="section-copy">Use the source before the slogan. Pull the document chain before taking the headline as final.</p>
+          <a class="big-link" href="https://www.axios.com/2026/04/22/trump-marijuana-rule-change" target="_blank" rel="noreferrer">Open Axios Article</a>
+        </div>
+        <div class="panel">
+          <h3>Next Wiring</h3>
+          <p class="section-copy">This page is ready for a second pass with CID display, image hash, receipt JSON links, ENS pointers, and a replay section once you want the full verification stack exposed.</p>
+          <a class="big-link" href="https://github.com/jsonwisdom/COMPUTERWIZARD" target="_blank" rel="noreferrer">Open Repo</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-line">COMPUTERWIZARD · Jason Wisdom · Waite Park Anchor · Build. Seal. Verify. Repeat.</div>
+    </footer>
+  </div>
+</body>
+</html>
