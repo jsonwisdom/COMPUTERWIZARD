@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friar Cipher Verifier</title>
+<style>
+:root{--bg:#05070d;--panel:#0b1020;--line:#1d4ed8;--text:#fff;--muted:#cbd5e1;--accent:#2563eb;--accent2:#60a5fa;--ok:#86efac;--warn:#fcd34d;--bad:#fca5a5}
+*{box-sizing:border-box}
+body{background:radial-gradient(circle at top,#0b1636 0%,#05070d 45%,#02040a 100%);color:var(--text);font-family:Arial,sans-serif;margin:0}
+.wrap{padding:20px;max-width:1040px;margin:auto}
+.card{background:rgba(11,16,32,.92);padding:20px;border-radius:18px;margin-top:20px;border:1px solid rgba(59,130,246,.45)}
+h1,h2,h3{margin:0 0 12px}
+p{line-height:1.6;color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(96,165,250,.28);background:#08101f;color:white}
+pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2);overflow:auto}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+.hero{font-size:12px;letter-spacing:.12em;color:var(--accent2);font-weight:700;margin-bottom:8px}
+img{max-width:100%;border-radius:16px;display:block}
+@media (max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">STEGO VERIFICATION LANE</div>
+  <h1>Friar Cipher Verifier</h1>
+  <p>Reads Friar stego records from <span class="mono">jaywisdom.eth</span>, fetches the PNG from IPFS, decodes the hidden payload, canonicalizes it, hashes it, and compares the result against ENS.</p>
+
+  <div class="card">
+    <h2>Verifier Target</h2>
+    <div class="row">
+      <input id="ensName" value="jaywisdom.eth" />
+      <button onclick="verifyFriar()">VERIFY</button>
+    </div>
+    <p class="mono" id="statusLine">idle</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>ENS Records</h3>
+      <pre id="ensOut">waiting</pre>
+    </div>
+    <div class="card">
+      <h3>Decoded Payload</h3>
+      <pre id="payloadOut">waiting</pre>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Canonical JSON</h3>
+      <pre id="canonicalOut">waiting</pre>
+    </div>
+    <div class="card">
+      <h3>Hash Comparison</h3>
+      <pre id="hashOut">waiting</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Image Preview</h3>
+    <img id="preview" alt="Friar image preview" />
+  </div>
+</div>
+
+<script type="module">
+import { createPublicClient, http, normalize } from 'https://esm.sh/viem@2.21.57';
+
+const mainnet = {
+  id: 1,
+  name: 'Ethereum',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://ethereum-rpc.publicnode.com'] } }
+};
+
+const publicClient = createPublicClient({ chain: mainnet, transport: http('https://ethereum-rpc.publicnode.com') });
+
+function setStatus(kind, text){
+  const el=document.getElementById('statusLine');
+  el.textContent=`${kind} — ${text}`;
+  el.className=kind==='VERIFIED'?'mono ok':kind==='FAILED'?'mono bad':'mono warn';
+}
+
+function decodeLSBFromImageData(imageData){
+  const bits=[];
+  for(let i=0;i<imageData.data.length;i+=4){
+    bits.push(imageData.data[i]&1);
+    bits.push(imageData.data[i+1]&1);
+    bits.push(imageData.data[i+2]&1);
+  }
+  const bytes=[];
+  for(let i=0;i+7<bits.length;i+=8){
+    let byte=0;
+    for(let j=0;j<8;j++) byte=(byte<<1)|bits[i+j];
+    if(byte===0) break;
+    bytes.push(byte);
+  }
+  return JSON.parse(new TextDecoder().decode(new Uint8Array(bytes)));
+}
+
+function canonicalizeTopLevel(obj){
+  const ordered={};
+  for(const k of Object.keys(obj).sort()) ordered[k]=obj[k];
+  return JSON.stringify(ordered);
+}
+
+async function sha256Hex(str){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return '0x'+[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+window.verifyFriar = async function(){
+  const expectedName=document.getElementById('ensName').value.trim();
+  document.getElementById('ensOut').textContent='loading';
+  document.getElementById('payloadOut').textContent='loading';
+  document.getElementById('canonicalOut').textContent='loading';
+  document.getElementById('hashOut').textContent='loading';
+  setStatus('LOADING','reading ENS and fetching image');
+
+  try{
+    const imageCid=await publicClient.getEnsText({ name: normalize(expectedName), key: 'friar.image_cid' });
+    const title=await publicClient.getEnsText({ name: normalize(expectedName), key: 'friar.title' });
+    const version=await publicClient.getEnsText({ name: normalize(expectedName), key: 'friar.version' });
+    const ensPayloadHash=await publicClient.getEnsText({ name: normalize(expectedName), key: 'friar.payload_hash' });
+
+    const ensData={ ensName: expectedName, imageCid, title, version, ensPayloadHash };
+    document.getElementById('ensOut').textContent=JSON.stringify(ensData,null,2);
+
+    if(!imageCid){
+      setStatus('FAILED','no friar.image_cid found');
+      document.getElementById('hashOut').textContent=JSON.stringify({ match:false, error:'ENS records not found' },null,2);
+      return;
+    }
+
+    const url=`https://ipfs.io/ipfs/${imageCid}`;
+    const blob=await fetch(url).then(r=>r.blob());
+    const img=new Image();
+    img.src=URL.createObjectURL(blob);
+    document.getElementById('preview').src=img.src;
+    await img.decode();
+
+    const canvas=document.createElement('canvas');
+    canvas.width=img.naturalWidth||img.width;
+    canvas.height=img.naturalHeight||img.height;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0);
+
+    const payload=decodeLSBFromImageData(ctx.getImageData(0,0,canvas.width,canvas.height));
+    document.getElementById('payloadOut').textContent=JSON.stringify(payload,null,2);
+
+    const canonical=canonicalizeTopLevel(payload);
+    document.getElementById('canonicalOut').textContent=canonical;
+
+    const computedHash=await sha256Hex(canonical);
+    const match=(ensPayloadHash||'').toLowerCase()===computedHash.toLowerCase();
+
+    const hashData={ ensPayloadHash, computedHash, match };
+    document.getElementById('hashOut').textContent=JSON.stringify(hashData,null,2);
+
+    setStatus(match?'VERIFIED':'FAILED', match ? 'payload hash matches ENS' : 'payload hash mismatch');
+  }catch(err){
+    setStatus('FAILED','verifier error');
+    document.getElementById('hashOut').textContent=String(err);
+  }
+};
+</script>
+</body>
+</html>
