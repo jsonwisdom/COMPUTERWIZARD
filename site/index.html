@@ -18,7 +18,6 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.hidden{display:none}.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 @media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}} @media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
 </style>
-<script src="https://unpkg.com/viem@2.21.57/_esm/index.js" type="module"></script>
 </head>
 <body>
 <div class="wrap">
@@ -106,11 +105,39 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
       <div class="card" style="margin-top:0"><h3>Verification</h3><pre id="ensVerifyOutput"></pre><p id="ensVerifyHuman" class="warn"></p></div>
     </div>
   </div>
+
+  <div class="card">
+    <h2>📊 Public Truth Terminal</h2>
+    <p>Read-only dashboard. No wallet or API key required. It reads live ENS records, fetches the pinned receipt, checks the Base transaction, and scores the replay.</p>
+    <div class="grid">
+      <div class="card" style="margin-top:0">
+        <h3>ENS Name</h3>
+        <div class="row">
+          <input id="dashboardName" value="jaywisdom.base.eth" />
+          <button onclick="loadDashboardFromInput()">VERIFY</button>
+        </div>
+        <p class="small">Shareable URL format: <span class="mono" id="shareUrl"></span></p>
+      </div>
+      <div class="card" style="margin-top:0">
+        <h3>Overall Result</h3>
+        <p class="mono" id="dashboardOverall">idle</p>
+        <p id="dashboardOverallHuman" class="warn">waiting for dashboard load</p>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0"><h3>ENS Records</h3><pre id="dashboardEns"></pre></div>
+      <div class="card" style="margin-top:0"><h3>IPFS Receipt Preview</h3><pre id="dashboardIpfs"></pre></div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0"><h3>Base Timeline</h3><pre id="dashboardBase"></pre></div>
+      <div class="card" style="margin-top:0"><h3>Verification Score</h3><pre id="dashboardScore"></pre></div>
+    </div>
+  </div>
 </div>
 
 <script type="module">
-import { createWalletClient, custom, createPublicClient, http } from 'https://unpkg.com/viem@2.21.57/_esm/index.js';
-import { base, normalize, namehash } from 'https://unpkg.com/viem@2.21.57/_esm/chains/index.js';
+import { createWalletClient, custom, createPublicClient, http, normalize, namehash } from 'https://esm.sh/viem@2.21.57';
+import { base } from 'https://esm.sh/viem@2.21.57/chains';
 
 const publicClient = createPublicClient({ chain: base, transport: http('https://mainnet.base.org') });
 const TEXT_ABI=[{type:'function',name:'setText',stateMutability:'nonpayable',inputs:[{name:'node',type:'bytes32'},{name:'key',type:'string'},{name:'value',type:'string'}],outputs:[]}];
@@ -124,11 +151,13 @@ async function sha256Hex(text){ const bytes=new TextEncoder().encode(text); cons
 function canonicalize(value){ if(value===null||typeof value!=='object') return JSON.stringify(value); if(Array.isArray(value)) return '['+value.map(canonicalize).join(',')+']'; const keys=Object.keys(value).sort(); return '{'+keys.map(k=>JSON.stringify(k)+':'+canonicalize(value[k])).join(',')+'}'; }
 function fakeCidFromHash(hash){ return 'bafyfriar'+hash.slice(0,24); }
 function fakeDealIdFromHash(hash){ return 'deal_'+hash.slice(0,12); }
-function fakeTxCalldata(rootHash,cid){ return { to:'0x0000000000000000000000000000000000000000', data:'0x'+rootHash.slice(0,64)+cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128) }; }
+function fakeTxCalldata(rootHash,cid){ return { to:'0x0000000000000000000000000000000000000000', data:'0x'+rootHash + cid.split('').map(c=>c.charCodeAt(0).toString(16)).join('').slice(0,128) }; }
 function setPipelineStatus(items){ document.getElementById('pipelineStatus').innerHTML=items.map(x=>'<span class="pill">'+x+'</span>').join(''); }
 function updateBaseState(){ document.getElementById('baseState').textContent=baseState; const map={ 'pre-anchor':['warn','not anchored'], 'submitted':['warn','pending confirmation'], 'confirmed':['ok','anchored on Base'], 'failed':['bad','failed'] }; const [cls,text]=map[baseState]||['warn',baseState]; const el=document.getElementById('baseStateHuman'); el.className=cls; el.textContent=text; }
 function updateEnsState(){ document.getElementById('ensState').textContent=ensState; const map={ 'pre-ens':['warn','waiting for confirmed tx + real cid'], 'ens-writing':['warn','resolver write pending'], 'ens-confirmed':['ok','records written'], 'verified':['ok','resolver replay matches'], 'mismatch':['bad','resolver mismatch'], 'ens-failed':['bad','resolver write failed'] }; const [cls,text]=map[ensState]||['warn',ensState]; const el=document.getElementById('ensStateHuman'); el.className=cls; el.textContent=text; }
 function refreshButtons(){ document.getElementById('baseSendButton').disabled = !(lastAnchorPayload && walletClient); document.getElementById('ensAnchorButton').disabled = !(baseState==='confirmed' && currentReceiptReal?.cid && walletClient); document.getElementById('ensVerifyButton').disabled = !(ensState==='ens-confirmed' || ensState==='verified' || ensState==='mismatch'); }
+function setDashboardStatus(kind, text){ const a=document.getElementById('dashboardOverall'); const b=document.getElementById('dashboardOverallHuman'); a.textContent=kind; b.textContent=text; b.className=kind==='VERIFIED' ? 'ok' : kind==='FAILED' ? 'bad' : 'warn'; }
+function updateShareUrl(name){ const url = `${location.origin}${location.pathname}?name=${encodeURIComponent(name)}`; document.getElementById('shareUrl').textContent = url; }
 
 async function realIpfsPinPinata(receipt, pinataJwt){ const canonical=canonicalize(receipt); const canonicalHash=await sha256Hex(canonical); const body={ pinataContent: JSON.parse(canonical), pinataMetadata:{ name:`friar-receipt-${canonicalHash.slice(0,16)}` } }; const res=await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${pinataJwt}`}, body:JSON.stringify(body) }); const text=await res.text(); if(!res.ok) return {ok:false,status:'upload_failed',provider:'pinata',canonical_hash:canonicalHash,error:text}; let parsed; try{ parsed=JSON.parse(text);} catch { return {ok:false,status:'invalid_provider_response',provider:'pinata',canonical_hash:canonicalHash,error:text}; } return {ok:true,status:'pinned',provider:'pinata',canonical_json:canonical,canonical_hash:canonicalHash,cid:parsed.IpfsHash,pin_size:parsed.PinSize??null,timestamp:parsed.Timestamp??null}; }
 async function realIpfsPinWeb3Storage(receipt, token){ const canonical=canonicalize(receipt); const canonicalHash=await sha256Hex(canonical); const res=await fetch('https://api.web3.storage/upload',{ method:'POST', headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}, body:canonical }); const text=await res.text(); if(!res.ok) return {ok:false,status:'upload_failed',provider:'web3.storage',canonical_hash:canonicalHash,error:text}; let parsed; try{ parsed=JSON.parse(text);} catch { return {ok:false,status:'invalid_provider_response',provider:'web3.storage',canonical_hash:canonicalHash,error:text}; } return {ok:true,status:'uploaded',provider:'web3.storage',canonical_json:canonical,canonical_hash:canonicalHash,cid:parsed.cid||parsed.value?.cid||null}; }
@@ -147,7 +176,77 @@ async function getEnsResolver(name){ const resolver=await publicClient.getEnsRes
 window.ensAnchor = async function(){ if(!(baseState==='confirmed' && currentReceiptReal?.cid && walletClient && lastAnchorPayload && lastBaseReceipt)){ alert('Need confirmed Base tx and real CID first'); return; } ensState='ens-writing'; updateEnsState(); refreshButtons(); try{ const resolver=await getEnsResolver(ENS_NAME); const block=await publicClient.getBlock({ blockHash: lastBaseReceipt.receipt.blockHash }); const timestamp=new Date(Number(block.timestamp)*1000).toISOString(); const node=namehash(normalize(ENS_NAME)); const writes=[['friar/cid',currentReceiptReal.cid],['friar/merkle_root',lastAnchorPayload.merkle_root],['friar/tx_hash',lastBaseReceipt.hash],['friar/timestamp',timestamp]]; const out={ resolver, writes:[] }; for(const [key,value] of writes){ const { request }=await publicClient.simulateContract({ account: connectedAddress, address: resolver, abi: TEXT_ABI, functionName:'setText', args:[node,key,value] }); const hash=await walletClient.writeContract(request); const receipt=await publicClient.waitForTransactionReceipt({ hash }); if(receipt.status!=='success') throw new Error('ENS write failed: '+key); out.writes.push({ key, value, hash, receipt }); } document.getElementById('ensWriteOutput').textContent=JSON.stringify(out,null,2); ensState='ens-confirmed'; } catch(err){ ensState='ens-failed'; document.getElementById('ensWriteOutput').textContent=String(err); alert('ENS write failed: '+err.message); } updateEnsState(); refreshButtons(); };
 window.verifyEns = async function(){ try{ const keys=['friar/cid','friar/merkle_root','friar/tx_hash','friar/timestamp']; const values={}; for(const key of keys){ values[key]=await publicClient.getEnsText({ name: normalize(ENS_NAME), key }); } document.getElementById('ensVerifyOutput').textContent=JSON.stringify(values,null,2); const block= lastBaseReceipt ? await publicClient.getBlock({ blockHash:lastBaseReceipt.receipt.blockHash }) : null; const expectedTs= block ? new Date(Number(block.timestamp)*1000).toISOString() : null; const ok= values['friar/cid']===currentReceiptReal?.cid && values['friar/merkle_root']===lastAnchorPayload?.merkle_root && values['friar/tx_hash']===lastBaseReceipt?.hash && (!expectedTs || values['friar/timestamp']===expectedTs); ensState = ok ? 'verified' : 'mismatch'; const human=document.getElementById('ensVerifyHuman'); human.className = ok ? 'ok' : 'bad'; human.textContent = ok ? '✅ VERIFIED — resolver replay matches expected values' : '❌ MISMATCH — resolver values differ from expected pipeline outputs'; } catch(err){ ensState='mismatch'; document.getElementById('ensVerifyOutput').textContent=String(err); const human=document.getElementById('ensVerifyHuman'); human.className='bad'; human.textContent='❌ Verification failed'; } updateEnsState(); refreshButtons(); };
 
-async function renderFriar(){ const res=await fetch('friar-ooda.json'); friarData=await res.json(); document.getElementById('friar-thesis').textContent=friarData.thesis; document.getElementById('formula').textContent=friarData.compressed_formula.ooda_razor; document.getElementById('machine-line').textContent=friarData.compressed_formula.machine_translation; document.getElementById('spell').textContent=friarData.spell; document.getElementById('human-line').textContent=friarData.human_line; const glyphs=document.getElementById('glyphs'); glyphs.innerHTML=''; Object.entries(friarData.glyphs).forEach(([g,label])=>{ const el=document.createElement('div'); el.className='glyph'; el.textContent=g+' '+label; glyphs.appendChild(el); }); const loop=document.getElementById('friar-loop'); loop.innerHTML=''; friarData.loop.forEach(item=>{ const card=document.createElement('div'); card.className='step'; card.innerHTML='<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>'; loop.appendChild(card); }); document.getElementById('friar-protocol').textContent='Vows:\n- '+friarData.friar_protocol.vows.join('\n- ')+'\n\nAnti-patterns:\n- '+friarData.friar_protocol.anti_patterns.join('\n- '); setPipelineStatus(['waiting for receipt']); updateBaseState(); updateEnsState(); refreshButtons(); }
+window.loadDashboardFromInput = async function(){ const name=document.getElementById('dashboardName').value.trim(); await loadDashboard(name); };
+async function loadDashboard(name){
+  updateShareUrl(name);
+  setDashboardStatus('LOADING', 'reading ENS, IPFS, and Base');
+  document.getElementById('dashboardEns').textContent=''; document.getElementById('dashboardIpfs').textContent=''; document.getElementById('dashboardBase').textContent=''; document.getElementById('dashboardScore').textContent='';
+  try {
+    const ens = {
+      name,
+      cid: await publicClient.getEnsText({ name: normalize(name), key: 'friar/cid' }),
+      merkle_root: await publicClient.getEnsText({ name: normalize(name), key: 'friar/merkle_root' }),
+      tx_hash: await publicClient.getEnsText({ name: normalize(name), key: 'friar/tx_hash' }),
+      timestamp: await publicClient.getEnsText({ name: normalize(name), key: 'friar/timestamp' })
+    };
+    document.getElementById('dashboardEns').textContent = JSON.stringify(ens, null, 2);
+
+    let ipfsReceipt = null; let ipfsError = null;
+    if (ens.cid) {
+      try {
+        const r = await fetch(`https://ipfs.io/ipfs/${ens.cid}`);
+        ipfsReceipt = await r.json();
+      } catch (err) { ipfsError = String(err); }
+    }
+    document.getElementById('dashboardIpfs').textContent = ipfsReceipt ? JSON.stringify(ipfsReceipt, null, 2) : (ipfsError || 'No CID or fetch failed');
+
+    let tx = null; let txReceipt = null; let block = null;
+    if (ens.tx_hash) {
+      try {
+        tx = await publicClient.getTransaction({ hash: ens.tx_hash });
+        txReceipt = await publicClient.getTransactionReceipt({ hash: ens.tx_hash });
+        block = await publicClient.getBlock({ blockHash: txReceipt.blockHash });
+      } catch (err) {
+        document.getElementById('dashboardBase').textContent = String(err);
+      }
+    }
+    if (tx && txReceipt) {
+      document.getElementById('dashboardBase').textContent = JSON.stringify({
+        hash: ens.tx_hash,
+        blockNumber: txReceipt.blockNumber?.toString?.() ?? String(txReceipt.blockNumber),
+        status: txReceipt.status,
+        gasUsed: txReceipt.gasUsed?.toString?.() ?? String(txReceipt.gasUsed),
+        timestamp: block ? new Date(Number(block.timestamp) * 1000).toISOString() : null,
+        explorer: `https://basescan.org/tx/${ens.tx_hash}`
+      }, null, 2);
+    }
+
+    let recomputedReceiptHash = null; let recomputedMerkleRoot = null;
+    if (ipfsReceipt) {
+      const canonical = canonicalize(ipfsReceipt);
+      recomputedReceiptHash = await sha256Hex(canonical);
+      if (ipfsReceipt.compressed_claim_hash) {
+        recomputedMerkleRoot = await sha256Hex(ipfsReceipt.compressed_claim_hash + recomputedReceiptHash);
+      }
+    }
+
+    const score = {
+      records_complete: Boolean(ens.cid && ens.merkle_root && ens.tx_hash && ens.timestamp),
+      ipfs_fetch_ok: Boolean(ipfsReceipt),
+      merkle_root_match: Boolean(recomputedMerkleRoot && ens.merkle_root === recomputedMerkleRoot),
+      tx_confirmed: Boolean(txReceipt && txReceipt.status === 'success'),
+      timestamp_match: Boolean(block && ens.timestamp === new Date(Number(block.timestamp) * 1000).toISOString())
+    };
+    score.overall = Object.values(score).every(Boolean) ? 'VERIFIED' : 'FAILED';
+    document.getElementById('dashboardScore').textContent = JSON.stringify({ score, recomputed_receipt_hash: recomputedReceiptHash, recomputed_merkle_root: recomputedMerkleRoot }, null, 2);
+    setDashboardStatus(score.overall, score.overall === 'VERIFIED' ? 'all live sources agree' : 'one or more checks failed');
+  } catch (err) {
+    setDashboardStatus('FAILED', 'dashboard load failed');
+    document.getElementById('dashboardScore').textContent = String(err);
+  }
+}
+
+async function renderFriar(){ const res=await fetch('friar-ooda.json'); friarData=await res.json(); document.getElementById('friar-thesis').textContent=friarData.thesis; document.getElementById('formula').textContent=friarData.compressed_formula.ooda_razor; document.getElementById('machine-line').textContent=friarData.compressed_formula.machine_translation; document.getElementById('spell').textContent=friarData.spell; document.getElementById('human-line').textContent=friarData.human_line; const glyphs=document.getElementById('glyphs'); glyphs.innerHTML=''; Object.entries(friarData.glyphs).forEach(([g,label])=>{ const el=document.createElement('div'); el.className='glyph'; el.textContent=g+' '+label; glyphs.appendChild(el); }); const loop=document.getElementById('friar-loop'); loop.innerHTML=''; friarData.loop.forEach(item=>{ const card=document.createElement('div'); card.className='step'; card.innerHTML='<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>'; loop.appendChild(card); }); document.getElementById('friar-protocol').textContent='Vows:\n- '+friarData.friar_protocol.vows.join('\n- ')+'\n\nAnti-patterns:\n- '+friarData.friar_protocol.anti_patterns.join('\n- '); setPipelineStatus(['waiting for receipt']); updateBaseState(); updateEnsState(); refreshButtons(); const params = new URLSearchParams(location.search); const dashName = params.get('name') || document.getElementById('dashboardName').value || ENS_NAME; document.getElementById('dashboardName').value = dashName; updateShareUrl(dashName); await loadDashboard(dashName); }
 renderFriar();
 </script>
 </body>
