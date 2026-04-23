@@ -18,10 +18,12 @@ p{line-height:1.6;color:var(--muted)}
 .step{background:#0f172a;border:1px solid rgba(96,165,250,.28);padding:16px;border-radius:16px}
 .kicker{font-size:12px;letter-spacing:.12em;color:var(--accent2);font-weight:700}
 button{padding:12px 16px;border-radius:10px;border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
-pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2)}
+textarea,input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(96,165,250,.28);background:#08101f;color:white}
+pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;border:1px solid rgba(96,165,250,.2);overflow:auto}
 .glyphs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .glyph{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(96,165,250,.28);font-weight:700}
 .quote{font-size:1.3rem;font-weight:700;color:#eff6ff}
+.small{font-size:.92rem;color:#93c5fd}
 @media (max-width:900px){.loop,.grid{grid-template-columns:1fr 1fr}}
 @media (max-width:640px){.loop,.grid{grid-template-columns:1fr}}
 </style>
@@ -61,7 +63,41 @@ pre{white-space:pre-wrap;background:#08101f;padding:14px;border-radius:12px;bord
     </div>
   </div>
 
+  <div class="card">
+    <h2>🧾 Friar Receipts Mode</h2>
+    <p>Paste a claim. The friar strips noise, compresses language, and emits an anchor-ready receipt payload.</p>
+    <div class="grid">
+      <div>
+        <label class="small" for="claim">Input Claim</label>
+        <textarea id="claim" rows="8" placeholder="Paste a claim, headline, or narrative here..."></textarea>
+      </div>
+      <div>
+        <label class="small" for="source">Source / Context</label>
+        <input id="source" placeholder="source url, doc name, screenshot, witness note">
+        <div style="margin-top:12px">
+          <button onclick="runFriarReceipt()">GENERATE RECEIPT</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card" style="margin-top:0">
+        <h3>Compressed Claim</h3>
+        <pre id="compressedClaim"></pre>
+      </div>
+      <div class="card" style="margin-top:0">
+        <h3>Friar Questions</h3>
+        <pre id="friarQuestions"></pre>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>Anchor-Ready Receipt</h3>
+      <pre id="receiptOutput"></pre>
+    </div>
+  </div>
+
 <script>
+let friarData = null;
+
 async function runLoop(){
  const res = await fetch('filecoin-purpose.json');
  const data = await res.json();
@@ -72,18 +108,77 @@ async function runLoop(){
  document.getElementById('output').textContent = log;
 }
 
+function cleanText(text){
+ return text
+  .replace(/https?:\/\/\S+/g,'')
+  .replace(/\s+/g,' ')
+  .replace(/[“”]/g,'"')
+  .replace(/[‘’]/g,"'")
+  .trim();
+}
+
+function compressClaim(text){
+ const cleaned = cleanText(text);
+ const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
+ let best = sentences.sort((a,b)=>a.length-b.length)[0] || cleaned;
+ if(best.length > 220) best = best.slice(0,220).trim() + '…';
+ return best;
+}
+
+async function sha256Hex(text){
+ const bytes = new TextEncoder().encode(text);
+ const digest = await crypto.subtle.digest('SHA-256', bytes);
+ return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function runFriarReceipt(){
+ const claim = document.getElementById('claim').value.trim();
+ const source = document.getElementById('source').value.trim();
+ if(!claim){
+   document.getElementById('receiptOutput').textContent = 'Paste a claim first.';
+   return;
+ }
+ const compressed = compressClaim(claim);
+ const claimHash = await sha256Hex(cleanText(claim));
+ const compressedHash = await sha256Hex(compressed);
+ const now = new Date().toISOString();
+ const questions = friarData.loop.map(x => x.step + ': ' + x.question).join('\n');
+
+ const receipt = {
+   protocol: friarData.namespace,
+   version: friarData.version,
+   mode: 'friar_receipts',
+   created_at: now,
+   anchor: friarData.anchor,
+   input_claim: cleanText(claim),
+   input_claim_hash: claimHash,
+   compressed_claim: compressed,
+   compressed_claim_hash: compressedHash,
+   source: source || 'unspecified',
+   ooda_formula: friarData.compressed_formula.ooda_razor,
+   machine_translation: friarData.compressed_formula.machine_translation,
+   friar_spell: friarData.spell,
+   human_line: friarData.human_line,
+   status: 'anchor-ready'
+ };
+
+ document.getElementById('compressedClaim').textContent = compressed;
+ document.getElementById('friarQuestions').textContent = questions;
+ document.getElementById('receiptOutput').textContent = JSON.stringify(receipt,null,2);
+}
+
 async function renderFriar(){
  const res = await fetch('friar-ooda.json');
- const data = await res.json();
- document.getElementById('friar-thesis').textContent = data.thesis;
- document.getElementById('formula').textContent = data.compressed_formula.ooda_razor;
- document.getElementById('machine-line').textContent = data.compressed_formula.machine_translation;
- document.getElementById('spell').textContent = data.spell;
- document.getElementById('human-line').textContent = data.human_line;
+ friarData = await res.json();
+ document.getElementById('friar-thesis').textContent = friarData.thesis;
+ document.getElementById('formula').textContent = friarData.compressed_formula.ooda_razor;
+ document.getElementById('machine-line').textContent = friarData.compressed_formula.machine_translation;
+ document.getElementById('spell').textContent = friarData.spell;
+ document.getElementById('human-line').textContent = friarData.human_line;
 
  const glyphs = document.getElementById('glyphs');
  glyphs.innerHTML = '';
- Object.entries(data.glyphs).forEach(([g,label]) => {
+ Object.entries(friarData.glyphs).forEach(([g,label]) => {
    const el = document.createElement('div');
    el.className = 'glyph';
    el.textContent = g + ' ' + label;
@@ -92,7 +187,7 @@ async function renderFriar(){
 
  const loop = document.getElementById('friar-loop');
  loop.innerHTML = '';
- data.loop.forEach(item => {
+ friarData.loop.forEach(item => {
    const card = document.createElement('div');
    card.className = 'step';
    card.innerHTML = '<div class="kicker">'+item.step+'</div><h3>'+item.question+'</h3><p><strong>Friar rule:</strong> '+item.friar_rule+'</p><p><strong>Ockham move:</strong> '+item.ockham_move+'</p>';
@@ -100,7 +195,7 @@ async function renderFriar(){
  });
 
  const protocol = document.getElementById('friar-protocol');
- protocol.textContent = 'Vows:\n- ' + data.friar_protocol.vows.join('\n- ') + '\n\nAnti-patterns:\n- ' + data.friar_protocol.anti_patterns.join('\n- ');
+ protocol.textContent = 'Vows:\n- ' + friarData.friar_protocol.vows.join('\n- ') + '\n\nAnti-patterns:\n- ' + friarData.friar_protocol.anti_patterns.join('\n- ');
 }
 
 renderFriar();
