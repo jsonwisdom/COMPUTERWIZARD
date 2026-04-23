@@ -18,6 +18,21 @@ This repository serves as the core execution layer for the Digital ABI Domain, u
 ### The Motto
 > **Build. Seal. Verify. Repeat.**
 
+---
+
+## ⚡ ATTENTION LAYER (BASE)
+
+![Attention on Base](assets/attention-on-base-2026-04-22.jpeg)
+
+**Policy evolves. Truth compounds. Build on Base.**
+
+- OODA Loop → Observe → Orient → Decide → Act
+- Data > Narrative
+- Receipts > Headlines
+- Proposal ≠ Law
+
+---
+
 ## 🚦 OPERATIONAL GUIDELINES
 * **Security First**: Hardware-bound authentication (FIDO2/Passkeys) required.
 * **Code as Law**: All system mutations must pass through the Layered Receipt Stack (T1-T4).
