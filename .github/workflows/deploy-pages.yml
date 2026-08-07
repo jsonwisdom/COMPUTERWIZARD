@@ -2,8 +2,13 @@ name: Deploy RePlay to GitHub Pages
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main", "master"]
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Deployment reason (e.g., lineage audit complete, bot threshold update)'
+        required: false
+        default: 'manual verification'
 
 permissions:
   contents: read
