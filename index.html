@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RePlay — Jay's Bullshit Detector</title>
+<style>
+:root{--bg:#090b10;--card:#121722;--line:#2b3445;--text:#f7f7f8;--muted:#aab4c3;--accent:#f3c94b;--ok:#6ee7a8;--bad:#ff7d7d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#172033 0,#090b10 45%);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}.wrap{max-width:760px;margin:auto;padding:28px 18px 70px}.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--accent);font-weight:800;font-size:12px;letter-spacing:.08em}.hero{padding:42px 0 20px}h1{font-size:clamp(38px,8vw,72px);line-height:.95;margin:14px 0}h2{margin:0 0 10px}.sub{font-size:20px;line-height:1.5;color:var(--muted)}.card{background:rgba(18,23,34,.94);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:18px;box-shadow:0 12px 40px rgba(0,0,0,.25)}.q{font-size:21px;font-weight:800;margin-bottom:14px}.options{display:grid;gap:10px}.options button,.primary{width:100%;border:1px solid #39465c;background:#171e2b;color:#fff;border-radius:14px;padding:15px 16px;font-size:16px;text-align:left;cursor:pointer}.options button:hover,.options button.selected{border-color:var(--accent);background:#25261e}.primary{background:var(--accent);color:#161616;text-align:center;font-weight:900;border:none;margin-top:18px}.primary:disabled{opacity:.45;cursor:not-allowed}.small{color:var(--muted);font-size:14px;line-height:1.5}.hidden{display:none}.score{font-size:42px;font-weight:900;color:var(--accent)}.result{font-size:24px;font-weight:900;margin:10px 0}.footer{margin-top:36px;color:var(--muted);font-size:13px;text-align:center}.receipt{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;background:#0b0f17;border-radius:14px;padding:14px;border:1px solid var(--line);font-size:12px;color:#c8d3e1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="badge">♻️ REPLAY • GAME ZERO</span>
+    <h1>Jay's<br>Bullshit Detector</h1>
+    <p class="sub">Five questions. One claim. Decide what survives when you ask for the receipts.</p>
+  </div>
+
+  <div id="intro" class="card">
+    <h2>Think you can detect bullshit?</h2>
+    <p class="small">This is the public prototype of RePlay: make a call, inspect the evidence, then replay your reasoning. No account required.</p>
+    <button class="primary" onclick="startGame()">PLAY GAME ZERO →</button>
+  </div>
+
+  <div id="game" class="hidden"></div>
+
+  <div id="finish" class="card hidden">
+    <div class="score" id="score"></div>
+    <div class="result">♻️ REPLAY COMPLETE</div>
+    <p id="summary" class="sub"></p>
+    <div id="receipt" class="receipt"></div>
+    <button class="primary" onclick="location.reload()">PLAY AGAIN</button>
+  </div>
+
+  <div class="footer">RePlay prototype • COMPUTERWIZARD lineage • Evidence over narrative</div>
+</div>
+<script>
+const questions=[
+ {q:'1. Did Jay actually say or do the claim?',a:['YES','NO','NEED PROOF']},
+ {q:'2. What kind of evidence would matter most?',a:['PHOTO / VIDEO','RECORD / DOCUMENT','WITNESS','JUST A STORY']},
+ {q:'3. Does the evidence actually match the claim?',a:['MATCH','PARTIAL','NOPE','I NEED MORE']},
+ {q:'4. What is still missing?',a:['DATE','SOURCE','CONTEXT','NOTHING']},
+ {q:'5. Final call?',a:['TRUE','MOSTLY TRUE','BULLSHIT','UNKNOWN']}
+];
+let i=0,answers=[];
+function startGame(){document.getElementById('intro').classList.add('hidden');document.getElementById('game').classList.remove('hidden');render();}
+function render(){const g=document.getElementById('game');const x=questions[i];g.innerHTML=`<div class="card"><div class="small">QUESTION ${i+1} OF 5</div><div class="q">${x.q}</div><div class="options">${x.a.map(v=>`<button onclick="pick(this,'${v.replace(/'/g,"\\'")}')">${v}</button>`).join('')}</div><button id="next" class="primary" disabled onclick="next()">${i===4?'♻️ REPLAY':'NEXT →'}</button></div>`;}
+function pick(btn,v){document.querySelectorAll('.options button').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');answers[i]=v;document.getElementById('next').disabled=false;}
+function next(){if(i<4){i++;render();return;}finish();}
+function finish(){document.getElementById('game').classList.add('hidden');document.getElementById('finish').classList.remove('hidden');const cautious=answers.filter(x=>/PROOF|PARTIAL|MORE|UNKNOWN|SOURCE|CONTEXT|DATE/.test(x)).length;const wisdom=5+cautious;document.getElementById('score').textContent=`+${wisdom} Wisdom`;
+document.getElementById('summary').textContent='You made a verdict, but RePlay keeps the reasoning visible. The next version connects claims to real evidence and lets humans bring their own agents.';
+const r={game:'JAYS_BULLSHIT_DETECTOR',version:'GAME_ZERO_PUBLIC',answers,verdict:answers[4],wisdom,rule:'NO_AGENT_DECLares_TRUTH_ALONE'};document.getElementById('receipt').textContent=JSON.stringify(r,null,2);}
+</script>
+</body>
+</html>
